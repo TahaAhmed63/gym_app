@@ -40,18 +40,25 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       const expiryDate = new Date(m.expiryDate);
       return expiryDate <= sevenDaysFromNow && expiryDate >= new Date();
     }).length;
-
+    const totalCollectedCalculation=()=>{
+      const totalCollected=payments.reduce((acc,payment)=>acc+payment.amount_paid,0)
+      return totalCollected
+    }
+    const totalPendingCalculation=()=>{
+      const totalPending=payments.reduce((acc,payment)=>acc+payment.due_amount,0)
+      return totalPending
+    }
     // Process revenue data
     const revenueData = processRevenueData(payments);
-
+console.log(revenueData)
     return {
       totalMembers: members.length,
       activeMembers,
       inactiveMembers,
       todayCheckIns,
       expiringSoon,
-      totalRevenue: paymentStats.totalCollected,
-      pendingDues: paymentStats.pendingDues,
+      totalRevenue: totalCollectedCalculation(),
+      pendingDues: totalPendingCalculation(),
       revenueData
     };
   } catch (error) {

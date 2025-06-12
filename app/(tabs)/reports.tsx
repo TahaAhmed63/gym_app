@@ -1,38 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import Header from '@/components/common/Header';
 import { UserRound, Calendar, CreditCard, ArrowRight, Download, CircleAlert as AlertCircle, Cake, Clock } from 'lucide-react-native';
-import { fetchExpiringMembers, fetchBirthdayMembers } from '@/data/reportsService';
+import { fetchExpiringMembers, fetchBirthdayMembers, downloadReport } from '@/data/reportsService';
 import ReportCard from '@/components/reports/ReportCard';
+import { useLoading } from '@/contexts/LoadingContext';
+
+type TabType = 'expiry' | 'birthday';
+type TimeframeType = '3days' | '7days' | '15days' | '30days';
+type DownloadType = 'all' | 'active' | 'inactive' | 'partial';
+
+interface Member {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  dob?: string;
+  plan_end_date?: string;
+  status: 'active' | 'inactive';
+  plans?: {
+    name: string;
+    price: number;
+  };
+  days_remaining?: number;
+  days_until_birthday?: number;
+}
 
 export default function ReportsScreen() {
-  const [activeTab, setActiveTab] = useState('expiry');
-  const [expiryTimeframe, setExpiryTimeframe] = useState('3days');
-  const [isLoading, setIsLoading] = useState(false);
-  const [reportData, setReportData] = useState([]);
+  const [activeTab, setActiveTab] = useState<TabType>('expiry');
+  const [expiryTimeframe, setExpiryTimeframe] = useState<TimeframeType>('3days');
+  const [reportData, setReportData] = useState<Member[]>([]);
+  const { showLoading, hideLoading } = useLoading();
   
-  const handleTabChange = (tab) => {
+  const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     loadReportData(tab, tab === 'expiry' ? expiryTimeframe : '');
   };
   
-  const handleExpiryTimeframeChange = (timeframe) => {
+  const handleExpiryTimeframeChange = (timeframe: TimeframeType) => {
     setExpiryTimeframe(timeframe);
     loadReportData('expiry', timeframe);
   };
   
-  const loadReportData = async (type, timeframe = '') => {
-    setIsLoading(true);
+  const loadReportData = async (type: TabType, timeframe: string = '') => {
+    showLoading();
     
     try {
       let data;
@@ -46,11 +68,30 @@ export default function ReportsScreen() {
       setReportData(data || []);
     } catch (error) {
       console.error('Error loading report data:', error);
+      Alert.alert('Error', 'Failed to load report data. Please try again.');
     } finally {
-      setIsLoading(false);
+      hideLoading();
+    }
+  };
+console.log(reportData)
+  const handleDownload = async (type: DownloadType | 'expiry' | 'birthday') => {
+    showLoading();
+    try {
+      const downloadType = type === 'expiry' || type === 'birthday' ? 'active' : type;
+      await downloadReport(downloadType);
+      Alert.alert('Success', 'Report downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      Alert.alert('Error', 'Failed to download report. Please try again.');
+    } finally {
+      hideLoading();
     }
   };
   
+  useEffect(() => {
+    loadReportData(activeTab, activeTab === 'expiry' ? expiryTimeframe : '');
+  }, []);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="dark" />
@@ -139,7 +180,10 @@ export default function ReportsScreen() {
           {activeTab === 'expiry' ? 'Expiring Memberships' : 'Upcoming Birthdays'}
         </Text>
         
-        <TouchableOpacity style={styles.exportButton}>
+        <TouchableOpacity 
+          style={styles.exportButton}
+          onPress={() => handleDownload(activeTab === 'expiry' ? 'expiry' : 'birthday')}
+        >
           <Download size={16} color={COLORS.primary} />
           <Text style={styles.exportText}>Export</Text>
         </TouchableOpacity>
@@ -150,11 +194,7 @@ export default function ReportsScreen() {
         contentContainerStyle={styles.reportContainer}
         showsVerticalScrollIndicator={false}
       >
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
-        ) : reportData.length > 0 ? (
+        {reportData.length > 0 ? (
           reportData.map(item => (
             <ReportCard 
               key={item.id.toString()}
@@ -180,7 +220,10 @@ export default function ReportsScreen() {
         <Text style={styles.downloadTitle}>Download Reports</Text>
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity style={styles.downloadCard}>
+          <TouchableOpacity 
+            style={styles.downloadCard}
+            onPress={() => handleDownload('all')}
+          >
             <View style={[styles.downloadIcon, { backgroundColor: COLORS.primaryLight }]}>
               <UserRound size={24} color={COLORS.primary} />
             </View>
@@ -188,7 +231,10 @@ export default function ReportsScreen() {
             <ArrowRight size={16} color={COLORS.darkGray} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.downloadCard}>
+          <TouchableOpacity 
+            style={styles.downloadCard}
+            onPress={() => handleDownload('active')}
+          >
             <View style={[styles.downloadIcon, { backgroundColor: COLORS.successLight }]}>
               <UserRound size={24} color={COLORS.success} />
             </View>
@@ -196,7 +242,10 @@ export default function ReportsScreen() {
             <ArrowRight size={16} color={COLORS.darkGray} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.downloadCard}>
+          <TouchableOpacity 
+            style={styles.downloadCard}
+            onPress={() => handleDownload('inactive')}
+          >
             <View style={[styles.downloadIcon, { backgroundColor: COLORS.errorLight }]}>
               <UserRound size={24} color={COLORS.error} />
             </View>
@@ -204,7 +253,10 @@ export default function ReportsScreen() {
             <ArrowRight size={16} color={COLORS.darkGray} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.downloadCard}>
+          <TouchableOpacity 
+            style={styles.downloadCard}
+            onPress={() => handleDownload('partial')}
+          >
             <View style={[styles.downloadIcon, { backgroundColor: COLORS.warningLight }]}>
               <CreditCard size={24} color={COLORS.warning} />
             </View>
@@ -297,11 +349,6 @@ const styles = StyleSheet.create({
   reportContainer: {
     paddingHorizontal: 16,
     paddingBottom: 24,
-  },
-  loadingContainer: {
-    padding: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   emptyContainer: {
     padding: 40,

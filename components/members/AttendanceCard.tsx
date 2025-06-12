@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '@/constants/theme';
 import { Clock, LogIn, LogOut } from 'lucide-react-native';
 
-interface AttendanceRecord {
+export interface AttendanceRecord {
   date: string;
   checkIn: string;
   checkOut: string | null;

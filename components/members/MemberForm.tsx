@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useEffect, useState } from 'react';
@@ -10,6 +11,11 @@ import * as ImagePicker from 'expo-image-picker';
 import Button from '@/components/common/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchBatches } from '@/data/BatchService';
+import { formatCurrency } from '@/utils/currency';
+import { COUNTRY_TO_CODE } from '../dashboard/DashboardChart';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiCall, handleApiError } from '@/utils/api';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface MemberFormProps {
   initialData?: {
@@ -21,6 +27,7 @@ interface MemberFormProps {
     address: string;
     batch: string;
     plan: string;
+    status?: 'active' | 'inactive';
     photo?: string;
     emergency?: {
       name: string;
@@ -41,6 +48,7 @@ interface FormData {
   address: string;
   batch: string;
   plan: string;
+  status: 'active' | 'inactive';
   photo: string | null;
   emergency: {
     name: string;
@@ -59,6 +67,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
     address: initialData?.address || '',
     batch: initialData?.batch || '',
     plan: initialData?.plan || '',
+    status: initialData?.status || 'active',
     photo: initialData?.photo || null,
     emergency: {
       name: initialData?.emergency?.name || '',
@@ -66,42 +75,70 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       relationship: initialData?.emergency?.relationship || '',
     },
   });
-
+const {user}=useAuth()
   const [displayDate, setDisplayDate] = useState(
     initialData?.dob ? new Date(initialData.dob).toLocaleDateString() : new Date().toLocaleDateString()
   );
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+
   const [plans, setPlans] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
-const [batches, setBatches] = useState<Array<{id: string; name: string; schedule_time: string}>>([]);
-  useEffect(() => {
-    const fetchPlans = async () => {
-      setLoadingPlans(true);
+  const [errorPlans, setErrorPlans] = useState<string | null>(null);
+  const [batches, setBatches] = useState<Array<{id: string; name: string; schedule_time: string}>>([]);
+  const [errorBatches, setErrorBatches] = useState<string | null>(null);
+
+  const { showLoading, hideLoading } = useLoading();
+
+  const fetchData = async () => {
+    showLoading();
+    setLoadingPlans(true);
+    setErrorPlans(null);
+    setErrorBatches(null);
+    
+    try {
+      // Fetch plans
       const access_token = await AsyncStorage.getItem('access_token');
-      try {
-        const response = await fetch('https://gymbackend-nfa0.onrender.com/api/plans', {
-          headers: {
-            'Authorization': `Bearer ${access_token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const data = await response.json();
-        if (data.success) {
-          setPlans(data.data);
+      const response = await fetch('https://gymbackend-eight.vercel.app/api/plans', {
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json'
         }
-      } catch (error) {
-        console.error('Error fetching plans:', error);
-        Alert.alert('Error', 'Failed to fetch plans');
-      } finally {
-        setLoadingPlans(false);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch plans');
       }
-    };
-     fetchBatches().then((batches)=>{
-      setBatches(batches)
-     })
-    fetchPlans();
+      
+      const data = await response.json();
+      if (data.success) {
+        setPlans(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to fetch plans');
+      }
+
+      // Fetch batches
+      try {
+        const batchesData = await fetchBatches();
+        setBatches(batchesData);
+      } catch (error) {
+        console.error('Error fetching batches:', error);
+        setErrorBatches('Failed to load batches');
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      setErrorPlans('Failed to load plans');
+    } finally {
+      setLoadingPlans(false);
+      hideLoading();
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const countryCode = user?.country ? COUNTRY_TO_CODE[user.country] || 'US' : 'US';
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -152,7 +189,7 @@ const [batches, setBatches] = useState<Array<{id: string; name: string; schedule
         address: "test",
         batch_id: formData.batch,
         plan_id: selectedPlan.id,
-        status: 'active'
+        status: formData.status
       };
 
       onSubmit(memberData);
@@ -246,69 +283,122 @@ const [batches, setBatches] = useState<Array<{id: string; name: string; schedule
             maximumDate={new Date()}
           />
         )}
+
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusLabel}>Member Status</Text>
+          <View style={styles.statusToggle}>
+            <Text style={[
+              styles.statusText,
+              formData.status === 'active' ? styles.activeStatusText : styles.inactiveStatusText
+            ]}>
+              {formData.status === 'active' ? 'Active' : 'Inactive'}
+            </Text>
+            <Switch
+              value={formData.status === 'active'}
+              onValueChange={(value) => setFormData({
+                ...formData,
+                status: value ? 'active' : 'inactive'
+              })}
+              trackColor={{ false: COLORS.errorLight, true: COLORS.successLight }}
+              thumbColor={formData.status === 'active' ? COLORS.success : COLORS.error}
+            />
+          </View>
+        </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Membership Details</Text>
         
         <View style={styles.row}>
-          {plans.map((plan) => (
-            <TouchableOpacity 
-              key={plan.id}
-              style={[
-                styles.planButton,
-                formData.plan === plan.name.toLowerCase() && styles.selectedPlan
-              ]}
-              onPress={() => setFormData({ ...formData, plan: plan.name.toLowerCase() })}
-            >
-              <Text 
-                style={[
-                  styles.planText,
-                  formData.plan === plan.name.toLowerCase() && styles.selectedPlanText
-                ]}
+          <View style={styles.pickerContainer}>
+            {loadingPlans ? (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading plans...</Text>
+              </View>
+            ) : errorPlans ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errorPlans}</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={() => {
+                    setLoadingPlans(true);
+                    setErrorPlans(null);
+                    fetchData();
+                  }}
+                >
+                  <Text style={styles.retryText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <Picker
+                selectedValue={formData.plan}
+                onValueChange={(value) => setFormData({ ...formData, plan: value })}
+                style={styles.picker}
+                dropdownIconColor={COLORS.primary}
+                mode="dropdown"
               >
-                {plan.name}
-              </Text>
-              <Text 
-                style={[
-                  styles.planPrice,
-                  formData.plan === plan.name.toLowerCase() && styles.selectedPlanText
-                ]}
-              >
-                ₹{plan.price}/month
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Picker.Item 
+                  label="Select a plan" 
+                  value="" 
+                  color={COLORS.darkGray}
+                />
+                {plans.map((plan) => (
+                  <Picker.Item 
+                    key={plan.id}
+                    label={`${plan.name} - ${formatCurrency(plan.price || 0, countryCode)}/month`}
+                    value={plan.name.toLowerCase()}
+                    color={COLORS.black}
+                  />
+                ))}
+              </Picker>
+            )}
+          </View>
         </View>
 
         <View style={styles.row}>
-          {batches.map((batch) => (
-            <TouchableOpacity 
-              key={batch.id}
-              style={[
-                styles.batchButton,
-                formData.batch === batch.name.toLowerCase() && styles.selectedBatch
-              ]}
-              onPress={() => setFormData({ ...formData, batch: batch.id })}
-            >
-              <Text 
-                style={[
-                  styles.batchText,
-                  formData.batch === batch.name.toLowerCase() && styles.selectedBatchText
-                ]}
+          {errorBatches ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorBatches}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => {
+                  setErrorBatches(null);
+                  fetchBatches().then(setBatches).catch(() => setErrorBatches('Failed to load batches'));
+                }}
               >
-                {batch.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            batches.map((batch) => (
+              <TouchableOpacity 
+                key={batch.id}
+                style={[
+                  styles.batchButton,
+                  formData.batch === batch.name.toLowerCase() && styles.selectedBatch
+                ]}
+                onPress={() => setFormData({ ...formData, batch: batch.id })}
+              >
+                <Text 
+                  style={[
+                    styles.batchText,
+                    formData.batch === batch.name.toLowerCase() && styles.selectedBatchText
+                  ]}
+                >
+                  {batch.name}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </View>
 
       <Button
-        title="Add Member"
+        title="Save Member"
         onPress={handleSubmit}
-        isLoading={isLoading}
-        style={styles.submitButton}
+        loading={isLoading}
+        style={{ marginTop: 24, marginBottom: 24 }}
+        disabled={loadingPlans || !!errorPlans || !!errorBatches}
       />
     </ScrollView>
   );
@@ -462,5 +552,81 @@ const styles = StyleSheet.create({
     submitButton: {
       marginTop: 8,
       marginBottom: 24,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: COLORS.white,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: COLORS.lightGray,
+    },
+    statusLabel: {
+      ...FONTS.body3,
+      color: COLORS.black,
+    },
+    statusToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statusText: {
+      ...FONTS.body4,
+      marginRight: 8,
+    },
+    activeStatusText: {
+      color: COLORS.success,
+    },
+    inactiveStatusText: {
+      color: COLORS.error,
+    },
+    pickerContainer: {
+      flex: 1,
+      backgroundColor: COLORS.white,
+      borderWidth: 1,
+      borderColor: COLORS.lightGray,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    picker: {
+      width: '100%',
+      height: 56,
+      color: COLORS.black,
+    },
+    loadingContainer: {
+      height: 56,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: COLORS.lightGray,
+      borderRadius: 12,
+    },
+    loadingText: {
+      ...FONTS.body4,
+      color: COLORS.darkGray,
+    },
+    errorContainer: {
+      flex: 1,
+      padding: 12,
+      backgroundColor: COLORS.errorLight,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    errorText: {
+      ...FONTS.body4,
+      color: COLORS.error,
+      marginBottom: 8,
+    },
+    retryButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      backgroundColor: COLORS.error,
+      borderRadius: 8,
+    },
+    retryText: {
+      ...FONTS.body4,
+      color: COLORS.white,
     },
   });

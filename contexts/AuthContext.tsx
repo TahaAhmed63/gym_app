@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userData = await getCurrentUser();
       setUser(userData);
+      console.log(userData,"userData")
     } catch (error) {
       console.error('Error refreshing user:', error);
       setUser(null);
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshUser();
   }, []);
-
+console.log(user,"authuser")
   return (
     <AuthContext.Provider value={{ user, loading, refreshUser }}>
       {children}

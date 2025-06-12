@@ -23,7 +23,7 @@ interface PaymentRecord {
   period: string;
 }
 
-interface Member {
+export interface Member {
   id: number;
   name: string;
   phone: string;
@@ -41,7 +41,7 @@ interface Member {
   payments?: PaymentRecord[];
 }
 
-const API_BASE_URL = 'https://gymbackend-nfa0.onrender.com/api';
+const API_BASE_URL = 'https://gymbackend-eight.vercel.app/api';
 
 async function getAuthHeaders() {
   const token = await AsyncStorage.getItem('access_token');

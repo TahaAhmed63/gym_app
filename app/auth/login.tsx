@@ -56,23 +56,18 @@ export default function Login() {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.logoContainer}>
+        <View style={styles.logoWrapper}>
           <Image 
-            source={{ uri: 'https://images.pexels.com/photos/2204196/pexels-photo-2204196.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' }} 
+            source={require('@/assets/images/LOGO.png')} 
             style={styles.logo}
-            resizeMode="cover"
+            resizeMode="contain"
           />
-          <View style={styles.overlay} />
-          <Text style={styles.logoText}>FitPro</Text>
-          <Text style={styles.logoSubText}>Gym Management System</Text>
         </View>
-        
-        <View style={styles.formContainer}>
+        <View style={styles.formCard}>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
-          
           <View style={styles.inputContainer}>
-            <Mail size={20} color={COLORS.darkGray} />
+            <Mail size={20} color={COLORS.primary} />
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -80,33 +75,31 @@ export default function Login() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              placeholderTextColor={COLORS.gray}
             />
           </View>
-          
           <View style={styles.inputContainer}>
-            <Lock size={20} color={COLORS.darkGray} />
+            <Lock size={20} color={COLORS.primary} />
             <TextInput
               style={styles.input}
               placeholder="Password"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              placeholderTextColor={COLORS.gray}
             />
           </View>
-          
           <Link href="/auth/forgot-password" asChild>
             <TouchableOpacity>
               <Text style={styles.forgotPassword}>Forgot Password?</Text>
             </TouchableOpacity>
           </Link>
-          
           <Button 
             title="Sign In" 
             onPress={handleLogin} 
-            isLoading={isLoading}
+            loading={isLoading}
             style={styles.button}
           />
-          
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Don't have an account? </Text>
             <Link href="/auth/register" asChild>
@@ -124,48 +117,45 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   scrollContainer: {
     flexGrow: 1,
-  },
-  logoContainer: {
-    height: 240,
-    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: COLORS.background,
+  },
+  logoWrapper: {
+    alignItems: 'center',
+    marginBottom: 16,
   },
   logo: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  logoText: {
-    ...FONTS.h1,
-    color: COLORS.white,
+    width: 200,
+    height: 70,
     marginBottom: 8,
   },
-  logoSubText: {
-    ...FONTS.body3,
-    color: COLORS.white,
-  },
-  formContainer: {
-    flex: 1,
-    padding: 24,
+  formCard: {
+    width: '90%',
+    maxWidth: 400,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 28,
+    ...SIZES.shadow,
+    alignSelf: 'center',
+    marginTop: 8,
   },
   title: {
     ...FONTS.h2,
-    color: COLORS.black,
-    marginBottom: 8,
+    color: COLORS.primary,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   subtitle: {
     ...FONTS.body3,
     color: COLORS.darkGray,
-    marginBottom: 32,
+    marginBottom: 28,
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -174,8 +164,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.lightGray,
     borderRadius: 12,
     paddingHorizontal: 16,
-    height: 56,
+    height: 52,
     marginBottom: 16,
+    backgroundColor: COLORS.background,
   },
   input: {
     flex: 1,
@@ -188,10 +179,12 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     textAlign: 'right',
     marginBottom: 24,
+    marginTop: -8,
   },
   button: {
-    height: 56,
+    height: 52,
     borderRadius: 12,
+    marginTop: 4,
   },
   registerContainer: {
     flexDirection: 'row',

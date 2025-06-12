@@ -1,3 +1,4 @@
+import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -11,6 +12,7 @@ export default function SettingsLayout() {
         <Stack.Screen name="plans" />
         <Stack.Screen name="batches" />
         <Stack.Screen name="staff" />
+        <Stack.Screen name="automation" />
         <Stack.Screen name="help" />
         <Stack.Screen name="terms" />
       </Stack>

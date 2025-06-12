@@ -61,8 +61,9 @@ export default function Register() {
       } else {
         Alert.alert('Error', 'Failed to initiate registration. Please try again.');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } catch (error:any) {
+console.log(error)
+      Alert.alert('Error', error.message)
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +109,7 @@ export default function Register() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => router.replace('/auth/login')}
           >
             <ArrowLeft size={24} color={COLORS.black} />
           </TouchableOpacity>

@@ -166,3 +166,41 @@ export const getMemberPayments = async (memberId: string | number): Promise<{
   const response = await api.get(`/payments/member/${memberId}`);
   return response.data.data;
 };
+
+export const exportPaymentsToExcel = async (
+  period: 'day' | 'week' | 'month' | 'custom' = 'month',
+  dateRange?: { startDate: string | null; endDate: string | null }
+): Promise<Blob> => {
+  let url = '/payments/export';
+  const params = new URLSearchParams();
+
+  if (period === 'custom' && dateRange?.startDate && dateRange?.endDate) {
+    params.append('start_date', dateRange.startDate);
+    params.append('end_date', dateRange.endDate);
+  } else {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (period) {
+      case 'day':
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        break;
+      case 'week':
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case 'month':
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        break;
+      default:
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+    }
+
+    params.append('start_date', startDate.toISOString());
+    params.append('end_date', new Date().toISOString());
+  }
+
+  const response = await api.get(`${url}?${params.toString()}`, {
+    responseType: 'blob'
+  });
+  return response.data;
+};

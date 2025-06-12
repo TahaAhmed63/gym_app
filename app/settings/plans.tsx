@@ -40,7 +40,7 @@ console.log(plans)
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('https://gymbackend-nfa0.onrender.com/api/plans', {
+      const response = await fetch('https://gymbackend-eight.vercel.app/api/plans', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -98,7 +98,7 @@ console.log(plans)
                 throw new Error('No authentication token found');
               }
 
-              const response = await fetch(`https://gymbackend-nfa0.onrender.com/api/plans/${id}`, {
+              const response = await fetch(`https://gymbackend-eight.vercel.app/api/plans/${id}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -180,8 +180,8 @@ console.log(plans)
         plansToSave.map(async (plan, index) => {
           const existingPlan = plans[index];
           const url = existingPlan.id 
-            ? `https://gymbackend-nfa0.onrender.com/api/plans/${existingPlan.id}`
-            : 'https://gymbackend-nfa0.onrender.com/api/plans';
+            ? `https://gymbackend-eight.vercel.app/api/plans/${existingPlan.id}`
+            : 'https://gymbackend-eight.vercel.app/api/plans';
           
           return fetch(url, {
             method: existingPlan.id ? 'PUT' : 'POST',

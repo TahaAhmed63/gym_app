@@ -21,7 +21,7 @@ export default function BatchesScreen() {
     setIsLoading(true);
     try {
       const access_token = await AsyncStorage.getItem('access_token');
-      const response = await fetch('https://gymbackend-nfa0.onrender.com/api/batches', {
+      const response = await fetch('https://gymbackend-eight.vercel.app/api/batches', {
         headers: {
           'Authorization': `Bearer ${access_token}`,
           'Content-Type': 'application/json'
@@ -59,7 +59,7 @@ export default function BatchesScreen() {
           onPress: async () => {
             try {
               const access_token = await AsyncStorage.getItem('access_token');
-              const response = await fetch(`https://gymbackend-nfa0.onrender.com/api/batches/${id}`, {
+              const response = await fetch(`https://gymbackend-eight.vercel.app/api/batches/${id}`, {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${access_token}`,

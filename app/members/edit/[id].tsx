@@ -45,7 +45,7 @@ export default function EditMemberScreen() {
 
       try {
         const access_token = await AsyncStorage.getItem('access_token');
-        const response = await fetch(`https://gymbackend-nfa0.onrender.com/api/members/${id}`, {
+        const response = await fetch(`https://gymbackend-eight.vercel.app/api/members/${id}`, {
           headers: {
             'Authorization': `Bearer ${access_token}`,
             'Content-Type': 'application/json'
@@ -72,7 +72,7 @@ export default function EditMemberScreen() {
     setIsSaving(true);
     try {
       const access_token = await AsyncStorage.getItem('access_token');
-      const response = await fetch(`https://gymbackend-nfa0.onrender.com/api/members/${id}`, {
+      const response = await fetch(`https://gymbackend-eight.vercel.app/api/members/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${access_token}`,

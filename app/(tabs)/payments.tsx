@@ -7,25 +7,33 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
+import { COUNTRY_TO_CODE } from '@/components/dashboard/DashboardChart';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
 import { router } from 'expo-router';
 import { Plus, Filter, Download, ArrowUp, ArrowDown } from 'lucide-react-native';
 import Header from '@/components/common/Header';
 import PaymentCard from '@/components/payments/PaymentCard';
 import DateRangePicker from '@/components/payments/DateRangePicker';
-import { fetchPayments, fetchPaymentStats } from '@/data/paymentsService';
+import { fetchPayments, fetchPaymentStats, exportPaymentsToExcel } from '@/data/paymentsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function PaymentsScreen() {
   const [payments, setPayments] = useState([]);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isStatsLoading, setIsStatsLoading] = useState(true);
+  const {user}=useAuth()
   const [period, setPeriod] = useState('month'); // 'day', 'week', 'month', 'custom'
   const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
-  
+  const countryCode = user?.country ? COUNTRY_TO_CODE[user.country] || 'US' : 'US';
   const loadPayments = async () => {
     setIsLoading(true);
     try {
@@ -67,6 +75,36 @@ export default function PaymentsScreen() {
   const handleAddPayment = () => {
     router.push('/payments/add');
   };
+
+  const handleExport = async () => {
+    try {
+      const blob = await exportPaymentsToExcel(period, dateRange);
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64data = reader.result.split(',')[1];
+        
+        // Save file
+        const fileUri = `${FileSystem.documentDirectory}payments_export.xlsx`;
+        await FileSystem.writeAsStringAsync(fileUri, base64data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
+        // Share file
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri);
+        } else {
+          Alert.alert('Error', 'Sharing is not available on this device');
+        }
+      };
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert('Error', 'Failed to export payments data');
+    }
+  };
+
 const totalCollectedCalculation=()=>{
   const totalCollected=payments.reduce((acc,payment)=>acc+payment.amount_paid,0)
   return totalCollected
@@ -92,7 +130,7 @@ const totalPendingCalculation=()=>{
             <>
               <View style={styles.statCard}>
                 
-                <Text style={styles.statValue}>Rs {totalCollectedCalculation()}</Text>
+                <Text style={styles.statValue}>{formatCurrency(totalCollectedCalculation()|| 0, countryCode)} </Text>
                 <Text style={styles.statLabel}>Total Collected</Text>
                 <View style={[styles.statBadge, { backgroundColor: COLORS.successLight }]}>
                   <ArrowUp size={12} color={COLORS.success} />
@@ -103,7 +141,7 @@ const totalPendingCalculation=()=>{
               </View>
               
               <View style={styles.statCard}>
-                <Text style={styles.statValue}>Rs {totalPendingCalculation()}</Text>
+                <Text style={styles.statValue}>{formatCurrency(totalPendingCalculation()|| 0, countryCode)}</Text>
                 <Text style={styles.statLabel}>Pending Dues</Text>
                 <View style={[styles.statBadge, { backgroundColor: COLORS.errorLight }]}>
                   <ArrowDown size={12} color={COLORS.error} />
@@ -183,7 +221,10 @@ const totalPendingCalculation=()=>{
             Recent Transactions
           </Text>
           
-          <TouchableOpacity style={styles.exportButton}>
+          <TouchableOpacity 
+            style={styles.exportButton}
+            onPress={handleExport}
+          >
             <Download size={16} color={COLORS.primary} />
             <Text style={styles.exportText}>Export</Text>
           </TouchableOpacity>
@@ -199,6 +240,7 @@ const totalPendingCalculation=()=>{
             {payments.map((payment) => (
               <PaymentCard
                 key={payment.id.toString()}
+                coutrycode={countryCode}
                 payment={payment}
                 onPress={() => router.push(`/payments/${payment.id}`)}
               />

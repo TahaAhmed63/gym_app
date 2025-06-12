@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { Calendar, ChevronRight, User } from 'lucide-react-native';
+import { formatCurrency } from '@/utils/currency';
 
 interface PaymentCardProps {
   payment: {
@@ -14,11 +15,14 @@ interface PaymentCardProps {
     status: string;
     plan: string;
   };
+
   onPress: () => void;
+  coutrycode:string
 }
 
-export default function PaymentCard({ payment, onPress }: PaymentCardProps) {
+export default function PaymentCard({ payment, onPress,coutrycode }: PaymentCardProps) {
   console.log(payment ,"2025-05-23")
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -85,7 +89,7 @@ export default function PaymentCard({ payment, onPress }: PaymentCardProps) {
       
       <View style={styles.content}>
         <View>
-          <Text style={styles.amount}>₹{payment.amount_paid}</Text>
+          <Text style={styles.amount}>{formatCurrency(payment.amount_paid || 0, coutrycode)}</Text>
           <Text style={styles.plan}>{payment.due_amount}</Text>
           
           <View style={styles.dateContainer}>

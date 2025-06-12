@@ -15,16 +15,21 @@ import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Phone, MessageSquare, CreditCard as Edit2, Calendar, MoveVertical as MoreVertical, Clock, CreditCard, Dumbbell, User, Trash2 } from 'lucide-react-native';
-import { fetchMemberById, deleteMember } from '@/data/membersService';
+import { fetchMemberById, deleteMember, Member } from '@/data/membersService';
 import AttendanceCard from '@/components/members/AttendanceCard';
 import { getMemberPayments } from '@/data/paymentsService';
+import { getMemberAttendance, markMemberAttendance } from '@/data/attendanceService';
+import type { AttendanceRecord } from '@/components/members/AttendanceCard';
 
 export default function MemberDetailScreen() {
   const { id } = useLocalSearchParams();
-  const [member, setMember] = useState(null);
-  const [MemberPayments, setMemberPayments] = useState(null);
+  const [member, setMember] = useState<Member | null>(null);
+  const [MemberPayments, setMemberPayments] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('info');
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [checkInLoading, setCheckInLoading] = useState(false);
 
   useEffect(() => {
     const loadMember = async () => {
@@ -32,7 +37,7 @@ export default function MemberDetailScreen() {
 
       setIsLoading(true);
       try {
-        const data = await fetchMemberById(id);
+        const data = await fetchMemberById(id as string);
         setMember(data);
       } catch (error) {
         console.error('Error loading member:', error);
@@ -50,7 +55,7 @@ export default function MemberDetailScreen() {
 
       setIsLoading(true);
       try {
-        const data = await getMemberPayments(id);
+        const data = await getMemberPayments(id as string);
         setMemberPayments(data);
       } catch (error) {
         console.error('Error loading member:', error);
@@ -61,6 +66,20 @@ export default function MemberDetailScreen() {
 
     loadpayment();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab === 'attendance' && id) {
+      setAttendanceLoading(true);
+      getMemberAttendance(id as string)
+        .then(data => setAttendance(data))
+        .catch(err => {
+          setAttendance([]);
+          console.error('Error loading attendance:', err);
+        })
+        .finally(() => setAttendanceLoading(false));
+    }
+  }, [activeTab, id]);
+
 console.log(MemberPayments,"loadpayment")
   const handleCall = () => {
     if (!member?.phone) return;
@@ -106,7 +125,24 @@ console.log(MemberPayments,"loadpayment")
     );
   };
 
-  const formatDate = (dateString) => {
+  const handleCheckIn = async () => {
+    if (!id) return;
+    setCheckInLoading(true);
+    try {
+      await markMemberAttendance(id as string,member?.batch as string);
+      Alert.alert('Success', 'Attendance marked for today');
+      // Refresh attendance list
+      const data = await getMemberAttendance(id as string);
+      setAttendance(data);
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      Alert.alert('Error', 'Failed to mark attendance');
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -136,7 +172,7 @@ console.log(MemberPayments,"loadpayment")
       </View>
     );
   }
-
+console.log(member)
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="light" />
@@ -164,7 +200,7 @@ console.log(MemberPayments,"loadpayment")
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Text style={styles.profileInitials}>
-            {member.name.split(' ').map(n => n[0]).join('')}
+            {member.name.split(' ').map((n: string) => n[0]).join('')}
           </Text>
         </View>
         
@@ -291,13 +327,13 @@ console.log(MemberPayments,"loadpayment")
                 <Text style={styles.infoLabel}>Plan</Text>
                 <View style={styles.planContainer}>
                   <Dumbbell size={16} color={COLORS.white} />
-                  <Text style={styles.planText}>{member.plans.name}</Text>
+                  <Text style={styles.planText}>{member.plan}</Text>
                 </View>
               </View>
               
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Start Date</Text>
-                <Text style={styles.infoValue}>{formatDate(member.join_date)}</Text>
+                <Text style={styles.infoValue}>{formatDate(member.startDate)}</Text>
               </View>
               
               <View style={styles.infoRow}>
@@ -340,7 +376,7 @@ console.log(MemberPayments,"loadpayment")
         {activeTab === 'payments' && (
           <View style={styles.paymentContainer}>
             {MemberPayments && MemberPayments.length > 0 ? (
-             MemberPayments.map((payment, index) => (
+             MemberPayments.map((payment: any, index: number) => (
                 <View key={index} style={styles.paymentCard}>
                   <View style={styles.paymentHeader}>
                     <Text style={styles.paymentDate}>{formatDate(payment.payment_date)}</Text>
@@ -394,9 +430,10 @@ console.log(MemberPayments,"loadpayment")
                 <Text style={styles.viewAllText}>View All</Text>
               </TouchableOpacity>
             </View>
-            
-            {member.attendance && member.attendance.length > 0 ? (
-              member.attendance.map((record, index) => (
+            {attendanceLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : attendance && attendance.length > 0 ? (
+              attendance.map((record, index) => (
                 <AttendanceCard key={index} record={record} />
               ))
             ) : (
@@ -404,9 +441,12 @@ console.log(MemberPayments,"loadpayment")
                 <Text style={styles.emptyText}>No attendance records found</Text>
               </View>
             )}
-            
-            <TouchableOpacity style={styles.checkInButton}>
-              <Text style={styles.checkInButtonText}>Check-In Now</Text>
+            <TouchableOpacity style={styles.checkInButton} onPress={handleCheckIn} disabled={checkInLoading}>
+              {checkInLoading ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.checkInButtonText}>Check-In Now</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}

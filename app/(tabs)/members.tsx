@@ -45,10 +45,12 @@ export default function MembersScreen() {
   }, []);
 
   useEffect(() => {
+
     let result = members;
     
     // Apply status filter
     if (filterStatus !== 'all') {
+      
       result = result.filter(member => member.status === filterStatus);
     }
     

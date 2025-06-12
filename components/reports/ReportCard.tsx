@@ -5,13 +5,19 @@ import { Linking, Platform } from 'react-native';
 
 interface ReportCardProps {
   item: {
-    id: number;
+    id: string;
     name: string;
     phone: string;
     email: string;
-    expiryDate?: string;
     dob?: string;
-    daysLeft?: number;
+    plan_end_date?: string;
+    status: 'active' | 'inactive';
+    plans?: {
+      name: string;
+      price: number;
+    };
+    days_remaining?: number;
+    days_until_birthday?: number;
   };
   type: 'expiry' | 'birthday';
 }
@@ -51,22 +57,22 @@ export default function ReportCard({ item, type }: ReportCardProps) {
         <View style={styles.details}>
           <Text style={styles.name}>{item.name}</Text>
           
-          {type === 'expiry' && item.expiryDate && (
+          {type === 'expiry' && item.plan_end_date && (
             <View style={styles.infoRow}>
               <Clock size={14} color={COLORS.darkGray} />
               <Text style={styles.infoText}>
-                Expires on {formatDate(item.expiryDate)}
+                Expires on {formatDate(item.plan_end_date)}
               </Text>
             </View>
           )}
           
-          {type === 'expiry' && item.daysLeft !== undefined && (
+          {type === 'expiry' && item.days_remaining !== undefined && (
             <View 
               style={[
                 styles.daysLeftBadge,
-                item.daysLeft <= 3 
+                item.days_remaining <= 3 
                   ? styles.urgentBadge 
-                  : item.daysLeft <= 7 
+                  : item.days_remaining <= 7 
                     ? styles.warningBadge 
                     : styles.infoBadge
               ]}
@@ -74,14 +80,14 @@ export default function ReportCard({ item, type }: ReportCardProps) {
               <Text 
                 style={[
                   styles.daysLeftText,
-                  item.daysLeft <= 3 
+                  item.days_remaining <= 3 
                     ? styles.urgentText 
-                    : item.daysLeft <= 7 
+                    : item.days_remaining <= 7 
                       ? styles.warningText 
                       : styles.infoText
                 ]}
               >
-                {item.daysLeft} {item.daysLeft === 1 ? 'day' : 'days'} left
+                {item.days_remaining} {item.days_remaining === 1 ? 'day' : 'days'} left
               </Text>
             </View>
           )}

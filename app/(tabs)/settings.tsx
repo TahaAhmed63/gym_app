@@ -3,12 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
-import { User, LogOut, ChevronRight, Shield, Bell, Briefcase, CreditCard, CircleHelp as HelpCircle, FileText, Smartphone, Users } from 'lucide-react-native';
+import { User, LogOut, ChevronRight, Shield, Bell, Briefcase, CreditCard, CircleHelp as HelpCircle, FileText, Smartphone, Users, Settings } from 'lucide-react-native';
 import Header from '@/components/common/Header';
 import { logout } from '@/data/authService';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsScreen() {
+  const {user}=useAuth()
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   
@@ -49,8 +51,8 @@ export default function SettingsScreen() {
           </View>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>john.doe@example.com</Text>
+            <Text style={styles.profileName}>{user?.name}</Text>
+            <Text style={styles.profileEmail}>{user?.email}</Text>
           </View>
           
           <TouchableOpacity 
@@ -135,12 +137,22 @@ export default function SettingsScreen() {
             <Text style={styles.settingText}>Staff Management</Text>
             <ChevronRight size={20} color={COLORS.darkGray} />
           </TouchableOpacity>
+
           <TouchableOpacity 
             style={styles.settingItem}
             onPress={() => router.push('/settings/batches')}
           >
             <Users size={20} color={COLORS.success} />
             <Text style={styles.settingText}>Batches</Text>
+            <ChevronRight size={20} color={COLORS.darkGray} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/settings/automation')}
+          >
+            <Settings size={20} color={COLORS.success} />
+            <Text style={styles.settingText}>Automation</Text>
             <ChevronRight size={20} color={COLORS.darkGray} />
           </TouchableOpacity>
         </View>
