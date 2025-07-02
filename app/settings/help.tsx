@@ -11,6 +11,7 @@ import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { ArrowLeft, ChevronRight, CircleHelp as HelpCircle, Mail, MessageSquare, Phone } from 'lucide-react-native';
+import { getAllStaff, createStaff, updateStaff, deleteStaff, updateStaffPermissions } from '@/data/staffService';
 
 export default function HelpScreen() {
   const faqs = [

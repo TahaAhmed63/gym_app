@@ -17,10 +17,13 @@ import MemberCard from '@/components/members/MemberCard';
 import FilterModal from '@/components/members/FilterModal';
 import { fetchMembers } from '@/data/membersService';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import type { Member } from '@/data/membersService';
 
 export default function MembersScreen() {
-  const [members, setMembers] = useState([]);
-  const [filteredMembers, setFilteredMembers] = useState([]);
+const [members, setMembers] = useState<Member[] | null>(null);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -31,6 +34,7 @@ export default function MembersScreen() {
     setIsLoading(true);
     try {
       const data = await fetchMembers();
+   
       setMembers(data);
       setFilteredMembers(data);
     } catch (error) {
@@ -40,9 +44,11 @@ export default function MembersScreen() {
     }
   };
 // console.log(members)
-  useEffect(() => {
-    loadMembers();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadMembers();
+    }, [])
+  );
 
   useEffect(() => {
 
@@ -66,7 +72,7 @@ export default function MembersScreen() {
     setFilteredMembers(result);
   }, [members, searchQuery, filterStatus]);
 
-  const handleFilterApply = (status) => {
+  const handleFilterApply = (status: string) => {
     setFilterStatus(status);
     setFilterModalVisible(false);
   };
@@ -76,71 +82,69 @@ export default function MembersScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
-      <Header title="Members" />
-      
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBox}>
-          <Search size={20} color={COLORS.darkGray} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search members..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            clearButtonMode="while-editing"
-          />
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setFilterModalVisible(true)}
-        >
-          <Filter size={20} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.header}>
-        <Text style={styles.totalMembers}>
-          {filteredMembers.length} {filteredMembers.length === 1 ? 'Member' : 'Members'}
-        </Text>
-        
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={[
-              styles.viewModeButton, 
-              viewMode === 'list' && styles.activeViewMode
-            ]}
-            onPress={() => setViewMode('list')}
-          >
-            <List size={20} color={viewMode === 'list' ? COLORS.primary : COLORS.darkGray} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[
-              styles.viewModeButton, 
-              viewMode === 'grid' && styles.activeViewMode
-            ]}
-            onPress={() => setViewMode('grid')}
-          >
-            <Grid size={20} color={viewMode === 'grid' ? COLORS.primary : COLORS.darkGray} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      
-      {isLoading ? (
+    isLoading ? (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="dark" />
+        <Header title="Members" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
-      ) : (
+      </SafeAreaView>
+    ) : (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar style="dark" />
+        <Header title="Members" />
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBox}>
+            <Search size={20} color={COLORS.darkGray} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search members..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              clearButtonMode="while-editing"
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.filterButton}
+            onPress={() => setFilterModalVisible(true)}
+          >
+            <Filter size={20} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.header}>
+          <Text style={styles.totalMembers}>
+            {filteredMembers.length} {filteredMembers.length === 1 ? 'Member' : 'Members'}
+          </Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={[
+                styles.viewModeButton, 
+                viewMode === 'list' && styles.activeViewMode
+              ]}
+              onPress={() => setViewMode('list')}
+            >
+              <List size={20} color={viewMode === 'list' ? COLORS.primary : COLORS.darkGray} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[
+                styles.viewModeButton, 
+                viewMode === 'grid' && styles.activeViewMode
+              ]}
+              onPress={() => setViewMode('grid')}
+            >
+              <Grid size={20} color={viewMode === 'grid' ? COLORS.primary : COLORS.darkGray} />
+            </TouchableOpacity>
+          </View>
+        </View>
         <FlatList
           data={filteredMembers}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <MemberCard 
-              member={item} 
+              member={{ ...item, join_date: item.expiryDate }}
               onPress={() => router.push(`/members/${item.id}`)}
-              viewMode={viewMode}
+              viewMode={viewMode as 'grid' | 'list'}
             />
           )}
           numColumns={viewMode === 'grid' ? 2 : 1}
@@ -153,22 +157,20 @@ export default function MembersScreen() {
             </View>
           }
         />
-      )}
-      
-      <TouchableOpacity 
-        style={styles.addButton}
-        onPress={handleAddMember}
-      >
-        <Plus size={24} color={COLORS.white} />
-      </TouchableOpacity>
-      
-      <FilterModal 
-        visible={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        onApply={handleFilterApply}
-        currentFilter={filterStatus}
-      />
-    </SafeAreaView>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={handleAddMember}
+        >
+          <Plus size={24} color={COLORS.white} />
+        </TouchableOpacity>
+        <FilterModal 
+          visible={filterModalVisible}
+          onClose={() => setFilterModalVisible(false)}
+          onApply={handleFilterApply}
+          currentFilter={filterStatus}
+        />
+      </SafeAreaView>
+    )
   );
 }
 

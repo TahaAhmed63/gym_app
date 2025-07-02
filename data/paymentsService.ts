@@ -42,26 +42,7 @@ export interface PaymentSummary {
   }>;
 }
 
-const mockPayments: Payment[] = Array.from({ length: 20 }, (_, i) => {
-  const id = i + 1;
-  const memberId = Math.floor(Math.random() * 15) + 1;
-  const date = new Date();
-  date.setDate(date.getDate() - Math.floor(Math.random() * 60));
-  
-  const status = Math.random() > 0.8 ? 'partial' : Math.random() > 0.9 ? 'pending' : 'paid';
-  const amount = Math.floor(Math.random() * 1000) + 500;
-  
-  return {
-    id,
-    memberId,
-    memberName: `Member ${memberId}`,
-    amount,
-    date: date.toISOString(),
-    paymentMethod: ['Cash', 'Credit Card', 'UPI', 'Bank Transfer'][Math.floor(Math.random() * 4)],
-    status,
-    plan: ['Monthly Plan', 'Quarterly Plan', 'Annual Plan'][Math.floor(Math.random() * 3)]
-  };
-});
+
 
 export const fetchPayments = async (
   period: 'day' | 'week' | 'month' | 'custom' = 'month',
@@ -132,7 +113,9 @@ export const fetchPaymentStats = async (
   }
 
   const response = await api.get(`${url}?${params.toString()}`);
+  console.log(response.data.data,"response")
   return response.data.data;
+
 };
 
 export const getPaymentById = async (id: string | number): Promise<Payment> => {

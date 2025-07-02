@@ -1,99 +1,68 @@
-import { Tabs, router } from 'expo-router';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import { COLORS, FONTS } from '@/constants/theme';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Chrome as Home, Users, CreditCard, Settings, File } from 'lucide-react-native';
-import { useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
+// Import your screen components
+import DashboardScreen from './index';
+import MembersScreen from './members';
+import PaymentsScreen from './payments';
+import ReportsScreen from './reports';
+import SettingsScreen from './settings';
+
+const Tab = createBottomTabNavigator();
 
 export default function TabLayout() {
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await AsyncStorage.getItem('access_token');
-        if (!token) {
-          router.replace('/auth/login');
-        }
-      } catch (error) {
-        console.error('Error checking auth token:', error);
-        router.replace('/auth/login');
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const hasPermission = useRolePermissions();
 
   return (
-    <Tabs
+    <Tab.Navigator
       screenOptions={{
-        tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.darkGray,
-        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarStyle: { backgroundColor: '#fff', height: 60 },
+        tabBarActiveTintColor: '#3366FF',
+        tabBarInactiveTintColor: '#888',
         headerShown: false,
-        tabBarHideOnKeyboard: true,
       }}
     >
-      <Tabs.Screen
-        name="index"
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="members"
+      {hasPermission('edit_members') && (
+        <Tab.Screen
+          name="Members"
+          component={MembersScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+          }}
+        />
+      )}
+      {hasPermission('manage_payments') && (
+        <Tab.Screen
+          name="Payments"
+          component={PaymentsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <CreditCard size={size} color={color} />,
+          }}
+        />
+      )}
+      {hasPermission('view_reports') && (
+        <Tab.Screen
+          name="Reports"
+          component={ReportsScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => <File size={size} color={color} />,
+          }}
+        />
+      )}
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
         options={{
-          title: 'Members',
-          tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="payments"
-        options={{
-          title: 'Payments',
-          tabBarIcon: ({ color, size }) => (
-            <CreditCard size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: 'Reports',
-          tabBarIcon: ({ color, size }) => (
-            <File size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <Settings size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: COLORS.white,
-    height: 60,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  tabBarLabel: {
-    ...FONTS.caption,
-    marginTop: 0,
-    fontSize: 10,
-  },
-});

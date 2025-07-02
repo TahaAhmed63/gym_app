@@ -24,7 +24,7 @@ const DEFAULT_CURRENCY = CURRENCY_FORMATS.US;
  */
 export function formatCurrency(
   amount: number,
-  countryCode: string = 'US',
+  countryCode: string,
   options: {
     showSymbol?: boolean;
     showCode?: boolean;
@@ -72,7 +72,7 @@ export function formatCurrency(
  * @param countryCode The country code
  * @returns Currency information including symbol and code
  */
-export function getCurrencyInfo(countryCode: string = 'US') {
+export function getCurrencyInfo(countryCode: string ) {
   return CURRENCY_FORMATS[countryCode] || DEFAULT_CURRENCY;
 }
 
@@ -82,7 +82,7 @@ export function getCurrencyInfo(countryCode: string = 'US') {
  * @param countryCode The country code
  * @returns The parsed number
  */
-export function parseCurrency(currencyString: string, countryCode: string = 'US'): number {
+export function parseCurrency(currencyString: string, countryCode: string): number {
   const currencyFormat = CURRENCY_FORMATS[countryCode] || DEFAULT_CURRENCY;
   
   // Remove currency symbol and any non-numeric characters except decimal point

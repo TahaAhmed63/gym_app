@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { COLORS, FONTS } from '@/constants/theme';
 import { formatCurrency } from '@/utils/currency';
@@ -8,6 +8,8 @@ import Svg, { Path, Circle, G } from 'react-native-svg';
 interface DashboardChartProps {
   data: Array<{ month: string; revenue: number }>;
   isLoading: boolean;
+  countryCode:string;
+  
 }
 
 // Map country names to country codes
@@ -23,11 +25,19 @@ export const COUNTRY_TO_CODE: Record<string, string> = {
   'Canada': 'CA',
   'European Union': 'EU',
 };
-
 export default function DashboardChart({ data, isLoading }: DashboardChartProps) {
-  const { user } = useAuth();
-  const countryCode = user?.country ? COUNTRY_TO_CODE[user.country] || 'US' : 'US';
-
+  const { user,refreshUser } = useAuth();
+  useEffect(()=>{
+refreshUser();
+  },[])
+  console.log(user?.country,"user country")
+  const countryKey = user?.country
+    ? Object.keys(COUNTRY_TO_CODE).find(
+        key => key.toLowerCase() === user?.country?.toLowerCase()
+      )
+    : undefined;
+  const countryCode = countryKey ? COUNTRY_TO_CODE[countryKey] : 'US';
+console.log(countryCode,"countrycode")
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>

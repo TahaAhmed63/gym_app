@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -14,66 +14,89 @@ import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { ArrowLeft, Mail, MoveVertical as MoreVertical, Phone, Plus, User } from 'lucide-react-native';
 import Button from '@/components/common/Button';
-
-interface StaffMember {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-}
+import {
+  fetchStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  updateStaffPermissions,
+} from '@/data/staffService';
+import { AuthContext } from '@/contexts/AuthContext';
+import { StaffMember } from '@/data/authService';
 
 export default function StaffScreen() {
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useContext(AuthContext) as { user: { id: string; gym_id: string }; loading: boolean };
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newStaff, setNewStaff] = useState<StaffMember>({
+  const [newStaff, setNewStaff] = useState<StaffMember & { password?: string }>({
     id: '',
+    user_id: user?.id || '',
     name: '',
     role: '',
     email: '',
     phone: '',
+    permissions: [],
+    gym_id: user?.gym_id || '',
+    created_at: '',
+    updated_at: '',
+    password: '',
   });
-  const [staff, setStaff] = useState<StaffMember[]>([
-    {
-      id: '1',
-      name: 'John Smith',
-      role: 'Trainer',
-      email: 'john@example.com',
-      phone: '1234567890',
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson',
-      role: 'Manager',
-      email: 'sarah@example.com',
-      phone: '0987654321',
-    },
-  ]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleAddStaff = () => {
-    if (!newStaff.name || !newStaff.role || !newStaff.email || !newStaff.phone) {
-      Alert.alert('Error', 'Please fill in all fields');
+  useEffect(() => {
+    setLoading(true);
+    fetchStaff().then((res: { data: { staff: StaffMember[] } }) => {
+      setStaff(res.data.staff);
+      setLoading(false);
+    });
+  }, []);
+
+  // Permissions options (customize as needed)
+  const PERMISSIONS = [
+    'view_reports',
+    'edit_members',
+    'manage_payments',
+    'manage_batches',
+    'manage_staff',
+  ];
+
+  const handleAddStaff = async () => {
+    if (!newStaff.name || !newStaff.role || !newStaff.email || !newStaff.phone || !newStaff.password) {
+      Alert.alert('Error', 'Please fill in all fields, including password');
       return;
     }
 
-    setStaff([
-      ...staff,
-      {
+    try {
+      const response = await createStaff({
         ...newStaff,
-        id: Date.now().toString(),
-      },
-    ]);
-    setNewStaff({
-      id: '',
-      name: '',
-      role: '',
-      email: '',
-      phone: '',
-    });
-    setShowAddForm(false);
+        user_id: user?.id || '',
+        gym_id: user?.gym_id || '',
+        password: newStaff.password,
+      });
+      setStaff([
+        ...staff,
+        response,
+      ]);
+      setNewStaff({
+        id: '',
+        user_id: user?.id || '',
+        name: '',
+        role: '',
+        email: '',
+        phone: '',
+        permissions: [],
+        gym_id: user?.gym_id || '',
+        created_at: '',
+        updated_at: '',
+        password: '',
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add staff');
+    }
   };
 
-  const handleRemoveStaff = (id: string) => {
+  const handleRemoveStaff = async (id: string) => {
     Alert.alert(
       'Remove Staff',
       'Are you sure you want to remove this staff member?',
@@ -82,10 +105,32 @@ export default function StaffScreen() {
         { 
           text: 'Remove',
           style: 'destructive',
-          onPress: () => setStaff(staff.filter(member => member.id !== id))
+          onPress: async () => {
+            try {
+              await deleteStaff(id);
+              setStaff(staff.filter((member: StaffMember) => member.id !== id));
+            } catch (error) {
+              Alert.alert('Error', 'Failed to remove staff');
+            }
+          },
         },
       ]
     );
+  };
+
+  const handleUpdateStaff = async (id: string, data: Partial<StaffMember>) => {
+    await updateStaff(id, data);
+    // refresh list
+  };
+
+  const handleDeleteStaff = async (id: string) => {
+    await deleteStaff(id);
+    // refresh list
+  };
+
+  const handleUpdatePermissions = async (id: string, permissions: string[]) => {
+    await updateStaffPermissions(id, permissions);
+    // refresh list
   };
 
   return (
@@ -151,28 +196,68 @@ export default function StaffScreen() {
               />
             </View>
 
+            <View style={styles.inputContainer}>
+              <Text style={{marginLeft: 4, marginRight: 8, color: COLORS.darkGray}}>🔒</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={newStaff.password}
+                onChangeText={(text) => setNewStaff({ ...newStaff, password: text })}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* Permissions selection */}
+            <Text style={{ marginBottom: 8, color: COLORS.darkGray }}>Permissions</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }}>
+              {PERMISSIONS.map((perm) => (
+                <TouchableOpacity
+                  key={perm}
+                  style={{
+                    backgroundColor: newStaff.permissions.includes(perm) ? COLORS.primary : COLORS.lightGray,
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    marginRight: 8,
+                    marginBottom: 8,
+                  }}
+                  onPress={() => {
+                    setNewStaff({
+                      ...newStaff,
+                      permissions: newStaff.permissions.includes(perm)
+                        ? newStaff.permissions.filter((p) => p !== perm)
+                        : [...newStaff.permissions, perm],
+                    });
+                  }}
+                >
+                  <Text style={{ color: newStaff.permissions.includes(perm) ? COLORS.white : COLORS.darkGray }}>{perm.replace('_', ' ')}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <View style={styles.formButtons}>
               <Button
                 title="Cancel"
                 onPress={() => setShowAddForm(false)}
                 variant="outline"
-                style={[styles.formButton, { marginRight: 8 }]}
+                style={StyleSheet.flatten([styles.formButton, { marginRight: 8 }])}
               />
               <Button
                 title="Add Staff"
                 onPress={handleAddStaff}
-                style={[styles.formButton, { marginLeft: 8 }]}
+                style={StyleSheet.flatten([styles.formButton, { marginLeft: 8 }])}
               />
             </View>
           </View>
         )}
 
-        {staff.map((member) => (
+        {staff.map((member: StaffMember) => (
           <View key={member.id} style={styles.staffCard}>
             <View style={styles.staffHeader}>
               <View style={styles.avatarContainer}>
                 <Text style={styles.avatarText}>
-                  {member.name.split(' ').map(n => n[0]).join('')}
+                  {member.name.split(' ').map((n: string) => n[0]).join('')}
                 </Text>
               </View>
               

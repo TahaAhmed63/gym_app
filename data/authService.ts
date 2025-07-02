@@ -33,7 +33,7 @@ interface RegisterResponse {
   };
 }
 
-interface StaffMember {
+export interface StaffMember {
   id: string;
   user_id: string;
   name: string;
@@ -49,7 +49,9 @@ interface StaffMember {
 let currentUser: User | null = null;
 
 export async function loginUser(email: string, password: string): Promise<boolean> {
+  currentUser = null; // Reset before login to avoid stale state
   try {
+    console.log('logging in with:',{email, password})
     const response = await fetch(`https://gymbackend-eight.vercel.app/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -160,13 +162,9 @@ export async function resetPassword(email: string): Promise<boolean> {
   }
 }
 
-
-
 export async function getCurrentUser(): Promise<User | null> {
-  let currentUser: User | null = null;
+  // Always read from AsyncStorage or API for latest user
   try {
-    if (currentUser) return currentUser;
-
     const userData = await AsyncStorage.getItem('user_data');
     if (userData) {
       currentUser = JSON.parse(userData);
@@ -200,24 +198,28 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
-
 export async function logout(): Promise<void> {
   try {
     const token = await AsyncStorage.getItem('access_token');
     if (token) {
-      await fetch('https://gymbackend-eight.vercel.app/api/auth/logout', {
+      const response = await fetch('https://gymbackend-eight.vercel.app/api/auth/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
+      const data = await response.json();
+      console.log('Logout API response:', data);
     }
   } catch (error) {
     console.error('Logout error:', error);
   } finally {
-    await AsyncStorage.multiRemove(['access_token', 'token_expires_at', 'user_data']);
-    currentUser = null;
+    try {
+      await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'token_expires_at', 'user_data']);
+      currentUser = null;
+      console.log('All AsyncStorage data cleared.');
+    } catch (storageError) {
+      console.error('Error clearing AsyncStorage:', storageError);
+    }
   }
 }
-
-export type { User, StaffMember };

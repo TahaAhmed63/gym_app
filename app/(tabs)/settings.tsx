@@ -8,11 +8,13 @@ import Header from '@/components/common/Header';
 import { logout } from '@/data/authService';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 
 export default function SettingsScreen() {
   const {user}=useAuth()
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const hasPermission = useRolePermissions();
   
   const handleLogout = async () => {
     Alert.alert(
@@ -111,41 +113,60 @@ export default function SettingsScreen() {
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Business Settings</Text>
           
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/settings/gym-info')}
-          >
-            <Briefcase size={20} color={COLORS.success} />
-            <Text style={styles.settingText}>Gym Information</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
-          </TouchableOpacity>
+          {/* {hasPermission('edit_members') && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/settings/gym-info')}
+            >
+              <Briefcase size={20} color={COLORS.success} />
+              <Text style={styles.settingText}>Gym Information</Text>
+              <ChevronRight size={20} color={COLORS.darkGray} />
+            </TouchableOpacity>
+          )} */}
           
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/settings/plans')}
-          >
-            <CreditCard size={20} color={COLORS.success} />
-            <Text style={styles.settingText}>Membership Plans</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
-          </TouchableOpacity>
+          {hasPermission('manage_payments') && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/settings/plans')}
+            >
+              <CreditCard size={20} color={COLORS.success} />
+              <Text style={styles.settingText}>Membership Plans</Text>
+              <ChevronRight size={20} color={COLORS.darkGray} />
+            </TouchableOpacity>
+          )}
           
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/settings/staff')}
-          >
-            <Users size={20} color={COLORS.success} />
-            <Text style={styles.settingText}>Staff Management</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
-          </TouchableOpacity>
+          {hasPermission('manage_staff') && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/settings/staff')}
+            >
+              <Users size={20} color={COLORS.success} />
+              <Text style={styles.settingText}>Staff Management</Text>
+              <ChevronRight size={20} color={COLORS.darkGray} />
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/settings/batches')}
-          >
-            <Users size={20} color={COLORS.success} />
-            <Text style={styles.settingText}>Batches</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
-          </TouchableOpacity>
+          {hasPermission('manage_batches') && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/settings/batches')}
+            >
+              <Users size={20} color={COLORS.success} />
+              <Text style={styles.settingText}>Batches</Text>
+              <ChevronRight size={20} color={COLORS.darkGray} />
+            </TouchableOpacity>
+          )}
+
+          {hasPermission('view_reports') && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/reports')}
+            >
+              <FileText size={20} color={COLORS.info} />
+              <Text style={styles.settingText}>Reports</Text>
+              <ChevronRight size={20} color={COLORS.darkGray} />
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity 
             style={styles.settingItem}

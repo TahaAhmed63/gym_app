@@ -68,7 +68,9 @@ export async function fetchMembers(): Promise<Member[]> {
     }
 
     const data = await response.json();
+    console.log(data.data,"data member")
     return data.data;
+
   } catch (error) {
     console.error('Error fetching members:', error);
     throw error;

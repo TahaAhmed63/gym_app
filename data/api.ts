@@ -2,7 +2,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://gymbackend-eight.vercel.app/api';
+export const API_URL ='https://gymbackend-eight.vercel.app/api';
 
 export const api = axios.create({
   baseURL: API_URL,

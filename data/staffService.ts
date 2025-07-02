@@ -100,4 +100,10 @@ export async function updateStaffPermissions(
     console.error('Update staff permissions error:', error);
     throw error;
   }
+}
+
+export { StaffMember };
+
+export async function fetchStaff() {
+  return getAllStaff({});
 } 

@@ -1,4 +1,4 @@
-    import { useState } from 'react';
+import { useState, useContext } from 'react';
     import { 
       View, 
       Text, 
@@ -17,6 +17,7 @@
     import MemberSelector from '@/components/members/MemberSelector';
     import DatePicker from '@/components/common/DatePicker';
     import { createPayment } from '@/data/paymentsService';
+    import { AuthContext } from '@/contexts/AuthContext';
 
     interface FormData {
       member_id: string;
@@ -37,6 +38,16 @@
     }
 
     export default function AddPaymentScreen() {
+      const { user } = useContext(AuthContext) as any;
+      const hasPermission = (perm: string) => {
+        if (user?.role === 'admin') return true;
+        if (user?.role === 'staff' && user?.staff?.permissions) {
+          return user.staff.permissions.includes(perm);
+        }
+        return false;
+      };
+      if (!hasPermission('manage_payments')) return null;
+
       const [formData, setFormData] = useState<FormData>({
         member_id: '',
         amount_paid: '',
@@ -248,4 +259,4 @@
         borderTopWidth: 1,
         borderTopColor: COLORS.lightGray,
       },
-    }); 
+    });

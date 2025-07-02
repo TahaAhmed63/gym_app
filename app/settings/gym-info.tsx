@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -18,7 +18,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function GymInfoScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const { user, loading, refreshUser } = useAuth
+  const { user, loading, refreshUser } = useAuth();
+  useEffect(()=>{
+    refreshUser();
+  },[])
   const [formData, setFormData] = useState({
     gym_name: user?.gym_name || '',
     country: user?.country || '',

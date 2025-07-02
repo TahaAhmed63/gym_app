@@ -34,7 +34,9 @@ export default function PaymentsScreen() {
   const [period, setPeriod] = useState('month'); // 'day', 'week', 'month', 'custom'
   const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const countryCode = user?.country ? COUNTRY_TO_CODE[user.country] || 'US' : 'US';
+  
   const loadPayments = async () => {
+
     setIsLoading(true);
     try {
       const data = await fetchPayments(period, dateRange);
