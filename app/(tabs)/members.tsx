@@ -43,16 +43,19 @@ const [members, setMembers] = useState<Member[] | null>(null);
       setIsLoading(false);
     }
   };
+  useEffect(()=>{
+    loadMembers();
+  },[])
 // console.log(members)
-  useFocusEffect(
-    useCallback(() => {
-      loadMembers();
-    }, [])
-  );
+//   useEffect(()=>{
+
+//       loadMembers();
+
+// },[]);
 
   useEffect(() => {
 
-    let result = members;
+    let result: Member[] = members ?? [];
     
     // Apply status filter
     if (filterStatus !== 'all') {
@@ -142,7 +145,7 @@ const [members, setMembers] = useState<Member[] | null>(null);
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <MemberCard 
-              member={{ ...item, join_date: item.expiryDate }}
+              member={{ ...item, join_date: item?.join_date }}
               onPress={() => router.push(`/members/${item.id}`)}
               viewMode={viewMode as 'grid' | 'list'}
             />

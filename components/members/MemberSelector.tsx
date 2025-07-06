@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, TextInput, Platform, KeyboardAvoidingView } from 'react-native';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { ChevronDown, User } from 'lucide-react-native';
 import { api } from '@/data/api';
@@ -24,11 +24,12 @@ export default function MemberSelector({ selectedMemberId,memberplaneamount, onS
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     loadMembers();
   }, []);
-console.log(selectedMemberId,"slectedmemberid")
+//
   useEffect(() => {
     if (selectedMemberId && members.length > 0) {
       const member = members.find(m => m.id === selectedMemberId);
@@ -57,9 +58,11 @@ console.log(selectedMemberId,"slectedmemberid")
     onSelect(member.id, member.plans?.price);
     setIsOpen(false);
   };
-console.log(selectedMember,"selectedmember")
-memberplaneamount=selectedMember?.plans?.price;
-console.log(memberplaneamount)
+
+  // Filter members by search
+  const filteredMembers = search.trim().length === 0
+    ? members
+    : members.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()));
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -83,41 +86,60 @@ console.log(memberplaneamount)
         animationType="fade"
         onRequestClose={() => setIsOpen(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsOpen(false)}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.modalContent}>
-            <View style={styles.dropdown}>
-              {loading ? (
-                <ActivityIndicator color={COLORS.primary} />
-              ) : (
-                members.map((member) => (
-                  <TouchableOpacity
-                    key={member.id}
-                    style={[
-                      styles.option,
-                      selectedMember?.id === member.id && styles.selectedOption
-                    ]}
-                    onPress={() => handleSelect(member)}
-                  >
-                    <Text style={[
-                      styles.optionText,
-                      selectedMember?.id === member.id && styles.selectedOptionText
-                    ]}>
-                      {member.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))
-              )}
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setIsOpen(false)}
+          >
+            <View style={styles.modalContent}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search member..."
+                placeholderTextColor={COLORS.darkGray}
+                value={search}
+                onChangeText={setSearch}
+                autoFocus
+              />
+              <View style={styles.dropdown}>
+                {loading ? (
+                  <ActivityIndicator color={COLORS.primary} />
+                ) : filteredMembers.length === 0 ? (
+                  <Text style={styles.optionText}>No members found</Text>
+                ) : (
+                  filteredMembers.map((member) => (
+                    <TouchableOpacity
+                      key={member.id}
+                      style={[
+                        styles.option,
+                        selectedMember?.id === member.id && styles.selectedOption
+                      ]}
+                      onPress={() => handleSelect(member)}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        selectedMember?.id === member.id && styles.selectedOptionText
+                      ]}>
+                        {member.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
+
     </View>
   );
 }
+
+// ...existing code...
+ 
 
 const styles = StyleSheet.create({
   container: {
@@ -164,6 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     ...SIZES.shadow,
   },
+  
   dropdown: {
     maxHeight: 400,
   },
@@ -182,5 +205,16 @@ const styles = StyleSheet.create({
   selectedOptionText: {
     color: COLORS.primary,
     fontFamily: 'Inter-SemiBold',
+  },
+  searchInput: {
+    height: 48,
+    borderColor: COLORS.lightGray,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    margin: 16,
+    color: COLORS.black,
+    ...FONTS.body3,
+    backgroundColor: COLORS.background || COLORS.white,
   },
 }); 

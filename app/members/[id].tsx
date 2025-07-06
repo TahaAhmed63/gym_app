@@ -80,7 +80,7 @@ export default function MemberDetailScreen() {
     }
   }, [activeTab, id]);
 
-console.log(MemberPayments,"loadpayment")
+// console.log(MemberPayments,"loadpayment")
   const handleCall = () => {
     if (!member?.phone) return;
     
@@ -159,7 +159,7 @@ console.log(MemberPayments,"loadpayment")
     );
   }
 
-  if (!member) {
+  if (!isLoading && !member) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Member not found</Text>
@@ -172,11 +172,10 @@ console.log(MemberPayments,"loadpayment")
       </View>
     );
   }
-console.log(member)
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="light" />
-      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -185,9 +184,7 @@ console.log(member)
         >
           <ArrowLeft size={24} color={COLORS.white} />
         </TouchableOpacity>
-        
         <Text style={styles.headerTitle}>Member Details</Text>
-        
         <TouchableOpacity 
           style={styles.moreButton}
           onPress={handleDelete}
@@ -195,20 +192,17 @@ console.log(member)
           <Trash2 size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>
-      
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={styles.profileImageContainer}>
           <Text style={styles.profileInitials}>
-            {member.name.split(' ').map((n: string) => n[0]).join('')}
+            {member && member.name ? member.name.split(' ').map((n: string) => n[0]).join('') : ''}
           </Text>
         </View>
-        
-        <Text style={styles.memberName}>{member.name}</Text>
+        <Text style={styles.memberName}>{member?.name}</Text>
         <Text style={styles.memberStatus}>
-          {member.status === 'active' ? 'Active' : 'Inactive'}
+          {member?.status === 'active' ? 'Active' : 'Inactive'}
         </Text>
-        
         <View style={styles.actionsRow}>
           <TouchableOpacity 
             style={styles.actionButton}
@@ -219,29 +213,26 @@ console.log(member)
             </View>
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={handleWhatsApp}
           >
-            <View style={[styles.actionIcon, { backgroundColor: COLORS.successLight }]}>
+            <View style={[styles.actionIcon, { backgroundColor: COLORS.successLight }]}> 
               <MessageSquare size={20} color={COLORS.success} />
             </View>
             <Text style={styles.actionText}>WhatsApp</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={handleEdit}
           >
-            <View style={[styles.actionIcon, { backgroundColor: COLORS.primaryLight }]}>
+            <View style={[styles.actionIcon, { backgroundColor: COLORS.primaryLight }]}> 
               <Edit2 size={20} color={COLORS.primary} />
             </View>
             <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
         </View>
       </View>
-      
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
@@ -249,80 +240,62 @@ console.log(member)
           onPress={() => setActiveTab('info')}
         >
           <User size={18} color={activeTab === 'info' ? COLORS.primary : COLORS.darkGray} />
-          <Text style={[styles.tabText, activeTab === 'info' && styles.activeTabText]}>
-            Info
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'info' && styles.activeTabText]}>Info</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={[styles.tab, activeTab === 'payments' && styles.activeTab]}
           onPress={() => setActiveTab('payments')}
         >
           <CreditCard size={18} color={activeTab === 'payments' ? COLORS.primary : COLORS.darkGray} />
-          <Text style={[styles.tabText, activeTab === 'payments' && styles.activeTabText]}>
-            Payments
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'payments' && styles.activeTabText]}>Payments</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={[styles.tab, activeTab === 'attendance' && styles.activeTab]}
           onPress={() => setActiveTab('attendance')}
         >
           <Calendar size={18} color={activeTab === 'attendance' ? COLORS.primary : COLORS.darkGray} />
-          <Text style={[styles.tabText, activeTab === 'attendance' && styles.activeTabText]}>
-            Attendance
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'attendance' && styles.activeTabText]}>Attendance</Text>
         </TouchableOpacity>
       </View>
-      
       {/* Tab Content */}
       <ScrollView style={styles.content}>
-        {activeTab === 'info' && (
+        {activeTab === 'info' && member && (
           <View style={styles.infoContainer}>
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>Personal Information</Text>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Phone Number</Text>
                 <Text style={styles.infoValue}>{member.phone}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Email Address</Text>
                 <Text style={styles.infoValue}>{member.email}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Date of Birth</Text>
                 <Text style={styles.infoValue}>{formatDate(member.dob)}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Gender</Text>
                 <Text style={styles.infoValue}>{member.gender}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Address</Text>
                 <Text style={styles.infoValue}>{member.address}</Text>
               </View>
             </View>
-            
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>Membership Details</Text>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Member ID</Text>
                 <Text style={styles.infoValue}>#{member.id}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Batch</Text>
                 <View style={styles.batchContainer}>
                   <Text style={styles.batchText}>{member.batch}</Text>
                 </View>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Plan</Text>
                 <View style={styles.planContainer}>
@@ -330,12 +303,10 @@ console.log(member)
                   <Text style={styles.planText}>{member.plan}</Text>
                 </View>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Start Date</Text>
-                <Text style={styles.infoValue}>{formatDate(member.startDate)}</Text>
+                <Text style={styles.infoValue}>{formatDate(member.join_date)}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Expiry Date</Text>
                 <View style={styles.expiryContainer}>
@@ -346,25 +317,21 @@ console.log(member)
                       { color: member.status === 'active' ? COLORS.success : COLORS.error }
                     ]}
                   >
-                    {formatDate(member.expiryDate)}
+                    {formatDate(member?.plan_end_date)}
                   </Text>
                 </View>
               </View>
             </View>
-            
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>Emergency Contact</Text>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Name</Text>
                 <Text style={styles.infoValue}>{member.emergency?.name || 'Not provided'}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Phone</Text>
                 <Text style={styles.infoValue}>{member.emergency?.phone || 'Not provided'}</Text>
               </View>
-              
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Relationship</Text>
                 <Text style={styles.infoValue}>{member.emergency?.relationship || 'Not provided'}</Text>
@@ -372,11 +339,10 @@ console.log(member)
             </View>
           </View>
         )}
-        
         {activeTab === 'payments' && (
           <View style={styles.paymentContainer}>
             {MemberPayments && MemberPayments.length > 0 ? (
-             MemberPayments.map((payment: any, index: number) => (
+              MemberPayments.map((payment: any, index: number) => (
                 <View key={index} style={styles.paymentCard}>
                   <View style={styles.paymentHeader}>
                     <Text style={styles.paymentDate}>{formatDate(payment.payment_date)}</Text>
@@ -389,13 +355,11 @@ console.log(member)
                       {payment.due_amount === 0  ? 'Paid' : 'Partial'}
                     </Text>
                   </View>
-                  
                   <View style={styles.paymentDetails}>
                     <View>
                       <Text style={styles.paymentPlan}>RS {payment.total_amount}</Text>
                       <Text style={styles.paymentPeriod}>{payment.period}</Text>
                     </View>
-                    
                     <View style={styles.paymentAmounts}>
                       <Text style={styles.paymentAmount}>₹{payment.amount_paid}</Text>
                       {payment.due_amount !== 0  && (
@@ -403,7 +367,6 @@ console.log(member)
                       )}
                     </View>
                   </View>
-                  
                   {payment.due_amount !== 0 && (
                     <TouchableOpacity 
                       style={styles.payButton}
@@ -421,7 +384,6 @@ console.log(member)
             )}
           </View>
         )}
-        
         {activeTab === 'attendance' && (
           <View style={styles.attendanceContainer}>
             <View style={styles.attendanceHeader}>
@@ -474,7 +436,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    ...FONTS.h3,
+    ...(FONTS?.h3 || {}),
     color: COLORS.error,
     marginBottom: 20,
   },

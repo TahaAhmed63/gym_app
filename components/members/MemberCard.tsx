@@ -25,7 +25,7 @@ export default function MemberCard({ member, onPress, viewMode }: MemberCardProp
       day: 'numeric'
     });
   };
-  
+  console.log(member,"member")
   const getStatusColor = (status: string) => {
     return status === 'active' ? COLORS.success : COLORS.error;
   };
@@ -72,7 +72,7 @@ export default function MemberCard({ member, onPress, viewMode }: MemberCardProp
             
             <View style={styles.metaItem}>
               <Calendar size={14} color={COLORS.darkGray} />
-              <Text style={styles.metaText}>Expires: {formatDate(member.join_date)}</Text>
+              <Text style={styles.metaText}>Expires: {formatDate(member.created_at)}</Text>
             </View>
           </View>
         </View>

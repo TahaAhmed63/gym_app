@@ -30,6 +30,8 @@ export interface Member {
   email: string;
   dob: string;
   gender: string;
+  plan_end_date:string;
+  join_date:string;
   address: string;
   status: 'active' | 'inactive';
   plan: string;

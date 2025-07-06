@@ -3,7 +3,7 @@
 import { api } from './api';
 
 export interface Payment {
-  id: number;
+  id: string;
   member_id: number;
   amount_paid: number;
   total_amount: number;

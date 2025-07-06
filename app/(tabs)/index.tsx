@@ -181,9 +181,9 @@ export default function DashboardScreen() {
           <View style={styles.chartContainer}>
             <View style={styles.chartHeader}>
               <Text style={styles.chartTitle}>Revenue Overview</Text>
-              <TouchableOpacity onPress={() => router.push('/reports/revenue')}>
+                     {/* <TouchableOpacity onPress={() => router.push('/reports/revenue')}>
                 <Text style={styles.chartAction}>View All</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
             <DashboardChart
               data={dashboardData?.revenueData || []}
