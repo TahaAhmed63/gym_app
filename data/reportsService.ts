@@ -14,6 +14,7 @@ interface Member {
   dob?: string;
   plan_end_date?: string;
   status: 'active' | 'inactive';
+  photo?: string;
   plans?: {
     name: string;
     price: number;
@@ -27,6 +28,7 @@ export async function fetchExpiringMembers(timeframe: string): Promise<Member[]>
   if (!response.success) {
     throw new Error(response.error || 'Failed to fetch expiring members');
   }
+  console.log(response,"new" )
   return response.data || [];
 }
 

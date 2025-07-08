@@ -29,6 +29,7 @@ interface Member {
   dob?: string;
   plan_end_date?: string;
   status: 'active' | 'inactive';
+  photo?: string;
   plans?: {
     name: string;
     price: number;
@@ -61,11 +62,14 @@ export default function ReportsScreen() {
       
       if (type === 'expiry') {
         data = await fetchExpiringMembers(timeframe);
+        console.log('Fetched expiring members data:', data);
       } else if (type === 'birthday') {
         data = await fetchBirthdayMembers();
+        console.log('Fetched birthday members data:', data);
       }
-      
+
       setReportData(data || []);
+      console.log('reportData after set:', data || []); // Add this line
     } catch (error) {
       console.error('Error loading report data:', error);
       Alert.alert('Error', 'Failed to load report data. Please try again.');
@@ -73,7 +77,11 @@ export default function ReportsScreen() {
       hideLoading();
     }
   };
-console.log(reportData)
+  
+  useEffect(() => {
+    loadReportData(activeTab, activeTab === 'expiry' ? expiryTimeframe : '');
+  }, []);
+  
   const handleDownload = async (type: DownloadType | 'expiry' | 'birthday') => {
     showLoading();
     try {
@@ -88,10 +96,6 @@ console.log(reportData)
     }
   };
   
-  useEffect(() => {
-    loadReportData(activeTab, activeTab === 'expiry' ? expiryTimeframe : '');
-  }, []);
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar style="dark" />

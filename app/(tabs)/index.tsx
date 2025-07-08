@@ -66,11 +66,11 @@ export default function DashboardScreen() {
     }
   };
   // console.log(dashboardData);
-  // const onRefresh = async () => {
-  //   setRefreshing(true);
-  //   await loadData(true);
-  //   setRefreshing(false);
-  // };
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData(true);
+    setRefreshing(false);
+  };
 
 
 
@@ -137,9 +137,9 @@ export default function DashboardScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        // refreshControl={
-        //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        // }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* Summary Cards */}
         <View style={styles.cardsContainer}>
@@ -149,6 +149,7 @@ export default function DashboardScreen() {
             icon={<Users size={24} color={COLORS.white} />}
             backgroundColor={COLORS.primary}
             isLoading={isLoading}
+            
           />
           <DashboardCard
             title="Active Members"

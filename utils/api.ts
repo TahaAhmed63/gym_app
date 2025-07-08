@@ -32,7 +32,7 @@ export async function apiCall<T>(
 
     return {
       success: true,
-      data: data.data,
+      data: data.data !== undefined ? data.data : data, // Modified line
       message: data.message,
     };
   } catch (error) {

@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 import { Cake, Calendar, ChevronRight, Clock, Phone, User } from 'lucide-react-native';
 import { Linking, Platform } from 'react-native';
+import { router } from 'expo-router';
 
 interface ReportCardProps {
   item: {
@@ -12,6 +13,7 @@ interface ReportCardProps {
     dob?: string;
     plan_end_date?: string;
     status: 'active' | 'inactive';
+    photo?: string; // Corrected to photo
     plans?: {
       name: string;
       price: number;
@@ -49,9 +51,13 @@ export default function ReportCard({ item, type }: ReportCardProps) {
     <View style={styles.container}>
       <View style={styles.memberInfo}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>
-            {item.name.split(' ').map(n => n[0]).join('')}
-          </Text>
+          {item.photo ? (
+            <Image source={{ uri: item.photo }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarText}>
+              {item.name.split(' ').map(n => n[0]).join('')}
+            </Text>
+          )}
         </View>
         
         <View style={styles.details}>
@@ -107,7 +113,7 @@ export default function ReportCard({ item, type }: ReportCardProps) {
           </View>
         </View>
         
-        <TouchableOpacity style={styles.moreButton}>
+        <TouchableOpacity style={styles.moreButton}      onPress={() => router.push(`/members/${item.id}`)}>
           <ChevronRight size={20} color={COLORS.darkGray} />
         </TouchableOpacity>
       </View>
@@ -156,6 +162,11 @@ const styles = StyleSheet.create({
   avatarText: {
     ...FONTS.h3,
     color: COLORS.primary,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25, // Make sure this matches avatarContainer's borderRadius
   },
   details: {
     flex: 1,

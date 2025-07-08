@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system'; // Import FileSystem
 import Button from '@/components/common/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchBatches } from '@/data/BatchService';
@@ -34,6 +35,7 @@ interface MemberFormProps {
       phone: string;
       relationship: string;
     };
+    joinDate?: string;
   };
   onSubmit: (data: any) => void;
   isLoading?: boolean;
@@ -55,6 +57,7 @@ interface FormData {
     phone: string;
     relationship: string;
   };
+  joinDate: string;
 }
 
 export default function MemberForm({ initialData, onSubmit, isLoading }: MemberFormProps) {
@@ -74,18 +77,26 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       phone: initialData?.emergency?.phone || '',
       relationship: initialData?.emergency?.relationship || '',
     },
+    joinDate: initialData?.joinDate
+      ? new Date(initialData.joinDate).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0],
   });
-const {user}=useAuth()
+  const { user } = useAuth();
+
   const [displayDate, setDisplayDate] = useState(
     initialData?.dob ? new Date(initialData.dob).toLocaleDateString() : new Date().toLocaleDateString()
   );
+  const [displayJoinDate, setDisplayJoinDate] = useState(
+    initialData?.joinDate ? new Date(initialData.joinDate).toLocaleDateString() : new Date().toLocaleDateString()
+  );
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showJoinDatePicker, setShowJoinDatePicker] = useState(false);
 
   const [plans, setPlans] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [errorPlans, setErrorPlans] = useState<string | null>(null);
-  const [batches, setBatches] = useState<Array<{id: string; name: string; schedule_time: string}>>([]);
+  const [batches, setBatches] = useState<Array<{ id: string; name: string; schedule_time: string }>>([]);
   const [errorBatches, setErrorBatches] = useState<string | null>(null);
 
   const { showLoading, hideLoading } = useLoading();
@@ -95,7 +106,7 @@ const {user}=useAuth()
     setLoadingPlans(true);
     setErrorPlans(null);
     setErrorBatches(null);
-    
+
     try {
       // Fetch plans
       const access_token = await AsyncStorage.getItem('access_token');
@@ -105,11 +116,11 @@ const {user}=useAuth()
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch plans');
       }
-      
+
       const data = await response.json();
       if (data.success) {
         setPlans(data.data);
@@ -153,32 +164,62 @@ const {user}=useAuth()
         Alert.alert('Error', 'Date of birth cannot be in the future');
         return;
       }
-      
+
       // Format date to YYYY-MM-DD
       const year = selectedDate.getFullYear();
       const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-      
+
       setDisplayDate(selectedDate.toLocaleDateString());
       setFormData({ ...formData, dob: formattedDate });
     }
   };
 
+  const handleJoinDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShowJoinDatePicker(false);
+    if (selectedDate) {
+      // Format date to YYYY-MM-DD
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+
+      setDisplayJoinDate(selectedDate.toLocaleDateString());
+      setFormData({ ...formData, joinDate: formattedDate });
+    }
+  };
+
+  // Helper to get file info for FormData
+  const getImageFileInfo = (uri: string) => {
+    // Try to extract filename and type from uri
+    let filename = uri.split('/').pop() || 'photo.jpg';
+    let match = /\.(\w+)$/.exec(filename);
+    let type = match ? `image/${match[1]}` : `image`;
+    return { uri, name: filename, type };
+  };
+
   const handleSubmit = async () => {
     try {
       // Validate required fields
-      if (!formData.name || !formData.phone || !formData.email || !formData.plan || !formData.batch) {
+      if (!formData.name || !formData.phone || !formData.email || !formData.plan ) {
         Alert.alert('Error', 'Please fill in all required fields');
         return;
       }
 
-      // Find the selected plan
-      const selectedPlan = plans.find(p => p.name.toLowerCase() === formData.plan.toLowerCase());
+      // Find the selected plan by id
+      const selectedPlan = plans.find(p => p.id === formData.plan);
       if (!selectedPlan) {
         Alert.alert('Error', 'Please select a valid plan');
         return;
       }
+
+      // Find the selected batch by id
+      const selectedBatch = batches.find(b => b?.id === formData.batch);
+      // // if (!selectedBatch) {
+      // //   Alert.alert('Error', 'Please select a valid batch');
+      // //   return;
+      // }
 
       const memberData = {
         name: formData.name,
@@ -186,16 +227,18 @@ const {user}=useAuth()
         email: formData.email,
         dob: formData.dob,
         gender: formData.gender,
-        address: "test",
-        batch_id: formData.batch,
+        address: formData.address || "test",
+        batch_id: selectedBatch?.id,
         plan_id: selectedPlan.id,
-        status: formData.status
+        status: formData.status,
+        joinDate: formData.joinDate,
+        photo: formData.photo,
       };
 
       onSubmit(memberData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      Alert.alert('Error', 'Failed to submit form');
+      Alert.alert('Error', error?.message || 'Failed to submit form');
     }
   };
 
@@ -205,19 +248,21 @@ const {user}=useAuth()
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
+      base64: true, // Request base64 data
     });
 
     if (!result.canceled) {
-      setFormData({ ...formData, photo: result.assets[0].uri });
+      const base64Image = `data:${result.assets[0].mimeType};base64,${result.assets[0].base64}`;
+      setFormData({ ...formData, photo: base64Image });
     }
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* <View style={styles.photoSection}>
+      <View style={styles.photoSection}>
         <TouchableOpacity style={styles.photoUpload} onPress={pickImage}>
           {formData.photo ? (
             <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
@@ -227,10 +272,10 @@ const {user}=useAuth()
             </View>
           )}
         </TouchableOpacity>
-      </View> */}
+      </View>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
-        
+
         <View style={styles.inputContainer}>
           <User size={20} color={COLORS.darkGray} />
           <TextInput
@@ -264,7 +309,7 @@ const {user}=useAuth()
           />
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.inputContainer}
           onPress={() => setShowDatePicker(true)}
         >
@@ -280,6 +325,30 @@ const {user}=useAuth()
             mode="date"
             display="default"
             onChange={handleDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+
+        {/* Join Date Picker */}
+        <TouchableOpacity
+          style={styles.inputContainer}
+          onPress={() => setShowJoinDatePicker(true)}
+        >
+          <Calendar size={20} color={COLORS.darkGray} />
+          <Text style={[styles.input, { marginLeft: 12 }]}>
+            {displayJoinDate}
+          </Text>
+          <Text style={{ marginLeft: 8, color: COLORS.darkGray, ...FONTS.body4 }}>
+            (Join Date)
+          </Text>
+        </TouchableOpacity>
+
+        {showJoinDatePicker && (
+          <DateTimePicker
+            value={new Date(formData.joinDate)}
+            mode="date"
+            display="default"
+            onChange={handleJoinDateChange}
             maximumDate={new Date()}
           />
         )}
@@ -308,7 +377,7 @@ const {user}=useAuth()
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Membership Details</Text>
-        
+
         <View style={styles.row}>
           <View style={styles.pickerContainer}>
             {loadingPlans ? (
@@ -318,7 +387,7 @@ const {user}=useAuth()
             ) : errorPlans ? (
               <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{errorPlans}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.retryButton}
                   onPress={() => {
                     setLoadingPlans(true);
@@ -337,16 +406,16 @@ const {user}=useAuth()
                 dropdownIconColor={COLORS.primary}
                 mode="dropdown"
               >
-                <Picker.Item 
-                  label="Select a plan" 
-                  value="" 
+                <Picker.Item
+                  label="Select a plan"
+                  value=""
                   color={COLORS.darkGray}
                 />
                 {plans.map((plan) => (
-                  <Picker.Item 
+                  <Picker.Item
                     key={plan.id}
                     label={`${plan.name} - ${formatCurrency(plan.price || 0, countryCode)}/month`}
-                    value={plan.name.toLowerCase()}
+                    value={plan.id}
                     color={COLORS.black}
                   />
                 ))}
@@ -359,7 +428,7 @@ const {user}=useAuth()
           {errorBatches ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{errorBatches}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.retryButton}
                 onPress={() => {
                   setErrorBatches(null);
@@ -371,18 +440,18 @@ const {user}=useAuth()
             </View>
           ) : (
             batches.map((batch) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 key={batch.id}
                 style={[
                   styles.batchButton,
-                  formData.batch === batch.name.toLowerCase() && styles.selectedBatch
+                  formData.batch === batch.id && styles.selectedBatch
                 ]}
                 onPress={() => setFormData({ ...formData, batch: batch.id })}
               >
-                <Text 
+                <Text
                   style={[
                     styles.batchText,
-                    formData.batch === batch.name.toLowerCase() && styles.selectedBatchText
+                    formData.batch === batch.id && styles.selectedBatchText
                   ]}
                 >
                   {batch.name}
@@ -405,228 +474,228 @@ const {user}=useAuth()
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: COLORS.background,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 16,
-      paddingVertical: 16,
-      backgroundColor: COLORS.white,
-      borderBottomWidth: 1,
-      borderBottomColor: COLORS.lightGray,
-    },
-    photoSection: {
-        alignItems: 'center',
-        paddingVertical: 24,
-        backgroundColor: COLORS.white,
-        marginBottom: 16,
-        ...SIZES.shadow,
-      },
-      photoUpload: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: COLORS.lightGray,
-        borderStyle: 'dashed',
-      },
-      photoPreview: {
-        width: '100%',
-        height: '100%',
-      },
-      photoPlaceholder: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: COLORS.lightGray,
-      },
-      photoPlaceholderText: {
-        ...FONTS.body4,
-        color: COLORS.darkGray,
-        textAlign: 'center',
-      },
-    backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: COLORS.lightGray,
-    },
-    headerTitle: {
-      ...FONTS.h3,
-      color: COLORS.black,
-    },
-    content: {
-      flex: 1,
-      padding: 16,
-    },
-    section: {
-      backgroundColor: COLORS.white,
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 16,
-      ...SIZES.shadow,
-    },
-    sectionTitle: {
-      ...FONTS.h4,
-      color: COLORS.black,
-      marginBottom: 16,
-    },
-    inputContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: COLORS.lightGray,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      height: 56,
-      marginBottom: 16,
-    },
-    input: {
-      flex: 1,
-      ...FONTS.body3,
-      marginLeft: 12,
-      color: COLORS.black,
-    },
-    row: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 16,
-    },
-    planButton: {
-      flex: 1,
-      backgroundColor: COLORS.white,
-      borderRadius: 12,
-      padding: 16,
-      marginHorizontal: 4,
-      borderWidth: 1,
-      borderColor: COLORS.lightGray,
-      alignItems: 'center',
-    },
-    selectedPlan: {
-      backgroundColor: COLORS.primaryLight,
-      borderColor: COLORS.primary,
-    },
-    planText: {
-      ...FONTS.body3,
-      color: COLORS.black,
-      marginBottom: 4,
-    },
-    planPrice: {
-      ...FONTS.body4,
-      color: COLORS.darkGray,
-    },
-    selectedPlanText: {
-      color: COLORS.primary,
-      fontFamily: 'Inter-SemiBold',
-    },
-    batchButton: {
-      flex: 1,
-      backgroundColor: COLORS.white,
-      borderRadius: 12,
-      padding: 12,
-      marginHorizontal: 4,
-      borderWidth: 1,
-      borderColor: COLORS.lightGray,
-      alignItems: 'center',
-    },
-    selectedBatch: {
-      backgroundColor: COLORS.primaryLight,
-      borderColor: COLORS.primary,
-    },
-    batchText: {
-      ...FONTS.body4,
-      color: COLORS.black,
-    },
-    selectedBatchText: {
-      color: COLORS.primary,
-      fontFamily: 'Inter-SemiBold',
-    },
-    submitButton: {
-      marginTop: 8,
-      marginBottom: 24,
-    },
-    statusContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: 16,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      backgroundColor: COLORS.white,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: COLORS.lightGray,
-    },
-    statusLabel: {
-      ...FONTS.body3,
-      color: COLORS.black,
-    },
-    statusToggle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    statusText: {
-      ...FONTS.body4,
-      marginRight: 8,
-    },
-    activeStatusText: {
-      color: COLORS.success,
-    },
-    inactiveStatusText: {
-      color: COLORS.error,
-    },
-    pickerContainer: {
-      flex: 1,
-      backgroundColor: COLORS.white,
-      borderWidth: 1,
-      borderColor: COLORS.lightGray,
-      borderRadius: 12,
-      marginBottom: 16,
-    },
-    picker: {
-      width: '100%',
-      height: 56,
-      color: COLORS.black,
-    },
-    loadingContainer: {
-      height: 56,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: COLORS.lightGray,
-      borderRadius: 12,
-    },
-    loadingText: {
-      ...FONTS.body4,
-      color: COLORS.darkGray,
-    },
-    errorContainer: {
-      flex: 1,
-      padding: 12,
-      backgroundColor: COLORS.errorLight,
-      borderRadius: 12,
-      alignItems: 'center',
-    },
-    errorText: {
-      ...FONTS.body4,
-      color: COLORS.error,
-      marginBottom: 8,
-    },
-    retryButton: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      backgroundColor: COLORS.error,
-      borderRadius: 8,
-    },
-    retryText: {
-      ...FONTS.body4,
-      color: COLORS.white,
-    },
-  });
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+  },
+  photoSection: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    backgroundColor: COLORS.white,
+    marginBottom: 16,
+    ...SIZES.shadow,
+  },
+  photoUpload: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    borderStyle: 'dashed',
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  photoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+  },
+  photoPlaceholderText: {
+    ...FONTS.body4,
+    color: COLORS.darkGray,
+    textAlign: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+  },
+  headerTitle: {
+    ...FONTS.h3,
+    color: COLORS.black,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  section: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    ...SIZES.shadow,
+  },
+  sectionTitle: {
+    ...FONTS.h4,
+    color: COLORS.black,
+    marginBottom: 16,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 16,
+  },
+  input: {
+    flex: 1,
+    ...FONTS.body3,
+    marginLeft: 12,
+    color: COLORS.black,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  planButton: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    alignItems: 'center',
+  },
+  selectedPlan: {
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
+  },
+  planText: {
+    ...FONTS.body3,
+    color: COLORS.black,
+    marginBottom: 4,
+  },
+  planPrice: {
+    ...FONTS.body4,
+    color: COLORS.darkGray,
+  },
+  selectedPlanText: {
+    color: COLORS.primary,
+    fontFamily: 'Inter-SemiBold',
+  },
+  batchButton: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    alignItems: 'center',
+  },
+  selectedBatch: {
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
+  },
+  batchText: {
+    ...FONTS.body4,
+    color: COLORS.black,
+  },
+  selectedBatchText: {
+    color: COLORS.primary,
+    fontFamily: 'Inter-SemiBold',
+  },
+  submitButton: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  statusLabel: {
+    ...FONTS.body3,
+    color: COLORS.black,
+  },
+  statusToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusText: {
+    ...FONTS.body4,
+    marginRight: 8,
+  },
+  activeStatusText: {
+    color: COLORS.success,
+  },
+  inactiveStatusText: {
+    color: COLORS.error,
+  },
+  pickerContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  picker: {
+    width: '100%',
+    height: 56,
+    color: COLORS.black,
+  },
+  loadingContainer: {
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 12,
+  },
+  loadingText: {
+    ...FONTS.body4,
+    color: COLORS.darkGray,
+  },
+  errorContainer: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: COLORS.errorLight,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  errorText: {
+    ...FONTS.body4,
+    color: COLORS.error,
+    marginBottom: 8,
+  },
+  retryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: COLORS.error,
+    borderRadius: 8,
+  },
+  retryText: {
+    ...FONTS.body4,
+    color: COLORS.white,
+  },
+});

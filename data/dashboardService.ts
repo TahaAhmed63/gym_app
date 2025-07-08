@@ -2,6 +2,7 @@
 
 import { fetchMembers } from './membersService';
 import { fetchPayments, fetchPaymentStats } from './paymentsService';
+import { fetchExpiringMembers } from './reportsService'; // Add this import
 
 export interface DashboardData {
   totalMembers: number;
@@ -17,10 +18,11 @@ export interface DashboardData {
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     // Fetch all required data in parallel
-    const [members, paymentStats, payments] = await Promise.all([
+    const [members, paymentStats, payments, expiringMembers] = await Promise.all([
       fetchMembers(),
       fetchPaymentStats('month'),
-      fetchPayments('month')
+      fetchPayments('month'),
+      fetchExpiringMembers('10days') // Fetch expiring members for 7 days
     ]);
 
     // Calculate member statistics
@@ -34,12 +36,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     ).length;
 
     // Calculate expiring soon (within next 7 days)
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const expiringSoon = members.filter(m => {
-      const expiryDate = new Date(m.expiryDate);
-      return expiryDate <= sevenDaysFromNow && expiryDate >= new Date();
-    }).length;
+    const expiringSoon = expiringMembers.length+1; // Use the length of fetched expiring members
     const totalCollectedCalculation=()=>{
       const totalCollected=payments.reduce((acc,payment)=>acc+payment.amount_paid,0)
       return totalCollected
