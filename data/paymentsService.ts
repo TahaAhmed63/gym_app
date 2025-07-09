@@ -4,7 +4,7 @@ import { api } from './api';
 
 export interface Payment {
   id: string;
-  member_id: number;
+  member_id: string; // Changed from number to string
   amount_paid: number;
   total_amount: number;
   due_amount: number;
@@ -22,6 +22,8 @@ export interface Payment {
 export interface PaymentStats {
   totalCollected: number;
   pendingDues: number;
+  amount_paid:number;
+  due_amount:number;
   collectionRate: number;
   pendingRate: number;
 }
@@ -42,12 +44,25 @@ export interface PaymentSummary {
   }>;
 }
 
+export interface PaginatedPayments {
+  data: Payment[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
 
 
 export const fetchPayments = async (
   period: 'day' | 'week' | 'month' | 'custom' = 'month',
-  dateRange?: { startDate: string | null; endDate: string | null }
-): Promise<Payment[]> => {
+  dateRange?: { startDate: string | null; endDate: string | null },
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedPayments> => {
   let url = '/payments';
   const params = new URLSearchParams();
 
@@ -76,8 +91,14 @@ export const fetchPayments = async (
     params.append('end_date', new Date().toISOString());
   }
 
+  params.append('page', page.toString());
+  params.append('limit', limit.toString());
+
   const response = await api.get(`${url}?${params.toString()}`);
-  return response.data.data;
+  return {
+    data: response.data.data,
+    meta: response.data.meta,
+  };
 };
 
 export const fetchPaymentStats = async (

@@ -4,7 +4,7 @@ import { Phone, Calendar } from 'lucide-react-native';
 
 interface MemberCardProps {
   member: {
-    id: number;
+    id: string; // Changed from number to string
     name: string;
     phone: string;
     email: string;

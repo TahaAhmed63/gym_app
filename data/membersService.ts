@@ -24,7 +24,7 @@ interface PaymentRecord {
 }
 
 export interface Member {
-  id: number;
+  id: string; // Changed from number to string
   name: string;
   phone: string;
   email: string;
@@ -41,6 +41,10 @@ export interface Member {
   emergency?: EmergencyContact;
   attendance?: AttendanceRecord[];
   payments?: PaymentRecord[];
+  discount_value?: number; // Add discount_value
+  admission_fees?: number;  // Add admission_fees
+  photo?: string; // Add photo field
+  meta:object;
 }
 
 const API_BASE_URL = 'https://gymbackend-eight.vercel.app/api';
@@ -57,10 +61,23 @@ async function getAuthHeaders() {
   };
 }
 
-export async function fetchMembers(): Promise<Member[]> {
+export interface MembersApiResponse {
+  [x: string]: any;
+  data: Member[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+export async function fetchMembers(page: number = 1, limit: number = 10): Promise<MembersApiResponse> {
   try {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/members`, {
+    const response = await fetch(`${API_BASE_URL}/members?page=${page}&limit=${limit}`, {
       headers
     });
 
@@ -70,8 +87,8 @@ export async function fetchMembers(): Promise<Member[]> {
     }
 
     const data = await response.json();
-    console.log(data.data,"data member")
-    return data.data;
+    console.log(data, "data member");
+    return data; // Return the full object (data + meta)
 
   } catch (error) {
     console.error('Error fetching members:', error);

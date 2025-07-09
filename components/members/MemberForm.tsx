@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Alert, Switch, Modal } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -36,6 +36,9 @@ interface MemberFormProps {
       relationship: string;
     };
     joinDate?: string;
+    discount_value?: number; // Add discount_value
+    admission_fees?: number;  // Add admission_fees
+    amount_paid?: number; // Add amount_paid
   };
   onSubmit: (data: any) => void;
   isLoading?: boolean;
@@ -58,6 +61,9 @@ interface FormData {
     relationship: string;
   };
   joinDate: string;
+  discount_value: string; // Change to string for TextInput
+  admission_fees: string;  // Change to string for TextInput
+  amount_paid: string; // Add amount_paid as string for TextInput
 }
 
 export default function MemberForm({ initialData, onSubmit, isLoading }: MemberFormProps) {
@@ -80,6 +86,9 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
     joinDate: initialData?.joinDate
       ? new Date(initialData.joinDate).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0],
+    discount_value: initialData?.discount_value?.toString() || '', // Initialize as string
+    admission_fees: initialData?.admission_fees?.toString() || '',  // Initialize as string
+    amount_paid: initialData?.amount_paid?.toString() || '', // Initialize as string
   });
   const { user } = useAuth();
 
@@ -92,6 +101,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showJoinDatePicker, setShowJoinDatePicker] = useState(false);
+  const [showImageSourceOptions, setShowImageSourceOptions] = useState(false); // New state for image source options
 
   const [plans, setPlans] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -221,6 +231,13 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       // //   return;
       // }
 
+      // Validate amount_paid against calculatedTotalAmount
+      const amountPaid = parseFloat(formData.amount_paid) || 0;
+      if (amountPaid > calculatedTotalAmount) {
+        Alert.alert('Error', 'Amount Paid cannot be greater than the Calculated Total Amount');
+        return;
+      }
+
       const memberData = {
         name: formData.name,
         phone: formData.phone,
@@ -233,6 +250,9 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
         status: formData.status,
         joinDate: formData.joinDate,
         photo: formData.photo,
+        discount_value: parseFloat(formData.discount_value) || 0,
+        admission_fees: parseFloat(formData.admission_fees) || 0,
+        amount_paid: parseFloat(formData.amount_paid) || 0,
       };
 
       onSubmit(memberData);
@@ -255,7 +275,32 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       const base64Image = `data:${result.assets[0].mimeType};base64,${result.assets[0].base64}`;
       setFormData({ ...formData, photo: base64Image });
     }
+    setShowImageSourceOptions(false);
   };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please grant camera access to take a photo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled) {
+      const base64Image = `data:${result.assets[0].mimeType};base64,${result.assets[0].base64}`;
+      setFormData({ ...formData, photo: base64Image });
+    }
+    setShowImageSourceOptions(false);
+  };
+
+  const selectedPlan = plans.find(p => p.id === formData.plan);
+  const calculatedTotalAmount = (selectedPlan?.price || 0) - (parseFloat(formData.discount_value || '0') || 0) + (parseFloat(formData.admission_fees || '0') || 0);
 
   return (
     <ScrollView
@@ -263,7 +308,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.photoSection}>
-        <TouchableOpacity style={styles.photoUpload} onPress={pickImage}>
+        <TouchableOpacity style={styles.photoUpload} onPress={() => setShowImageSourceOptions(true)}>
           {formData.photo ? (
             <Image source={{ uri: formData.photo }} style={styles.photoPreview} />
           ) : (
@@ -462,6 +507,45 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Financial Details</Text>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Discount Value (optional)"
+            value={formData.discount_value}
+            onChangeText={(text) => setFormData({ ...formData, discount_value: text })}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Admission Fees (optional)"
+            value={formData.admission_fees}
+            onChangeText={(text) => setFormData({ ...formData, admission_fees: text })}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Amount Paid (optional)"
+            value={formData.amount_paid}
+            onChangeText={(text) => setFormData({ ...formData, amount_paid: text })}
+            keyboardType="numeric"
+          />
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Calculated Total Amount:</Text>
+          <Text style={styles.infoValue}>{formatCurrency(calculatedTotalAmount, countryCode)}</Text>
+        </View>
+      </View>
+
       <Button
         title="Save Member"
         onPress={handleSubmit}
@@ -469,6 +553,27 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
         style={{ marginTop: 24, marginBottom: 24 }}
         disabled={loadingPlans || !!errorPlans || !!errorBatches}
       />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showImageSourceOptions}
+        onRequestClose={() => setShowImageSourceOptions(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Choose Image Source</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={pickImage}>
+              <Text style={styles.modalButtonText}>Pick from Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalButton} onPress={takePhoto}>
+              <Text style={styles.modalButtonText}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setShowImageSourceOptions(false)}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -697,5 +802,68 @@ const styles = StyleSheet.create({
   retryText: {
     ...FONTS.body4,
     color: COLORS.white,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  infoLabel: {
+    ...FONTS.body3,
+    color: COLORS.darkGray,
+  },
+  infoValue: {
+    ...FONTS.body3,
+    color: COLORS.primary,
+    fontFamily: 'Inter-SemiBold',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    ...FONTS.h4,
+    color: COLORS.black,
+    marginBottom: 20,
+  },
+  modalButton: {
+    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    ...FONTS.body3,
+    color: COLORS.primary,
+  },
+  cancelButton: {
+    backgroundColor: COLORS.errorLight,
+  },
+  cancelButtonText: {
+    ...FONTS.body3,
+    color: COLORS.error,
   },
 });

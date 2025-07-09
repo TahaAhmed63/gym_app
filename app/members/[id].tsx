@@ -20,6 +20,7 @@ import AttendanceCard from '@/components/members/AttendanceCard';
 import { getMemberPayments } from '@/data/paymentsService';
 import { getMemberAttendance, markMemberAttendance } from '@/data/attendanceService';
 import type { AttendanceRecord } from '@/components/members/AttendanceCard';
+import { api } from '@/data/api';
 
 export default function MemberDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -30,10 +31,21 @@ export default function MemberDetailScreen() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [statusChecking, setStatusChecking] = useState(false);
 
   useEffect(() => {
     const loadMember = async () => {
       if (!id) return;
+
+      setStatusChecking(true);
+      try {
+        // Call the check member status API before loading member details
+        await api.post('/members/check-status');
+      } catch (error) {
+        console.error('Error checking member status:', error);
+      } finally {
+        setStatusChecking(false);
+      }
 
       setIsLoading(true);
       try {
@@ -151,7 +163,7 @@ export default function MemberDetailScreen() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || statusChecking) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -339,8 +351,27 @@ export default function MemberDetailScreen() {
             </View>
           </View>
         )}
-        {activeTab === 'payments' && (
+        {activeTab === 'payments' && ( // Ensure member object is available
           <View style={styles.paymentContainer}>
+            {/* {member && (member.admission_fees || member.discount_value) ? (
+              <View style={styles.paymentCard}>
+                <View style={styles.paymentHeader}>
+                  <Text style={styles.paymentDate}>Join Date: {formatDate(member.join_date)}</Text>
+                  <Text style={[styles.paymentStatus, { color: COLORS.success }]}>Paid</Text>
+                </View>
+                <View style={styles.paymentDetails}>
+                  <View>
+                    <Text style={styles.paymentPlan}>Admission Fee (One-Time)</Text>
+                  </View>
+                  <View style={styles.paymentAmounts}>
+                    <Text style={styles.paymentAmount}>
+                      ₹{(member.admission_fees || 0) - (member.discount_value || 0)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : null} */}
+
             {MemberPayments && MemberPayments.length > 0 ? (
               MemberPayments.map((payment: any, index: number) => (
                 <View key={index} style={styles.paymentCard}>
@@ -357,8 +388,8 @@ export default function MemberDetailScreen() {
                   </View>
                   <View style={styles.paymentDetails}>
                     <View>
-                      <Text style={styles.paymentPlan}>RS {payment.total_amount}</Text>
-                      <Text style={styles.paymentPeriod}>{payment.period}</Text>
+                      <Text style={styles.paymentPlan}>{payment.notes === 'Admission Fee' ? 'Admission Fee' : `RS ${payment.total_amount}`}</Text>
+                      {/* Removed payment.period as it's not a valid field */}
                     </View>
                     <View style={styles.paymentAmounts}>
                       <Text style={styles.paymentAmount}>₹{payment.amount_paid}</Text>

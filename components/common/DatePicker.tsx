@@ -9,9 +9,10 @@ interface DatePickerProps {
   value: string;
   onChange: (date: string) => void;
   error?: string;
+  disabled?: boolean; // Add disabled prop
 }
 
-export default function DatePicker({ label, value, onChange, error }: DatePickerProps) {
+export default function DatePicker({ label, value, onChange, error, disabled }: DatePickerProps) {
   const [show, setShow] = useState(false);
   const date = value ? new Date(value) : new Date();
 
@@ -38,6 +39,7 @@ export default function DatePicker({ label, value, onChange, error }: DatePicker
       <TouchableOpacity
         style={[styles.input, error && styles.inputError]}
         onPress={() => setShow(true)}
+        disabled={disabled} // Apply disabled prop to TouchableOpacity
       >
         <View style={styles.dateContainer}>
           <Calendar size={16} color={COLORS.darkGray} />

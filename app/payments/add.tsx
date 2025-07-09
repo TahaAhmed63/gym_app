@@ -26,7 +26,6 @@ import { useState, useContext } from 'react';
       payment_date: string;
       payment_method: string;
       notes: string;
-      memberplaneamount?: number;
     }
 
     interface FormErrors {
@@ -55,20 +54,62 @@ import { useState, useContext } from 'react';
         payment_date: new Date().toISOString(),
         payment_method: 'cash',
         notes: '',
-        memberplaneamount: undefined
       });
       const [isLoading, setIsLoading] = useState(false);
       const [errors, setErrors] = useState<FormErrors>({});
+      const [isPaymentDue, setIsPaymentDue] = useState(false);
+      const [noPaymentDueMessage, setNoPaymentDueMessage] = useState('');
 
-      const handleMemberSelect = (memberId: number, planAmount?: number) => {
-        setFormData(prev => ({ 
-          ...prev, 
-          member_id: memberId.toString(),
-          total_amount: planAmount?.toString() || '',
-          memberplaneamount: planAmount || 0
+      const handleMemberSelect = (
+        memberId: string | null | undefined,
+        planAmount?: number,
+        discountValue?: number,
+        admissionFees?: number,
+        planEndDate?: string,
+        status?: 'active' | 'inactive',
+        memberPayments?: Array<{ due_amount: number, notes?: string }>
+      ) => {
+        const calculatedTotal = (planAmount || 0) - (discountValue || 0);
+        setFormData(prev => ({
+          ...prev,
+          member_id: memberId ?? '',
+          total_amount: calculatedTotal.toString(),
         }));
-        console.log(formData,"paymentdate")
         setErrors(prev => ({ ...prev, member_id: '' }));
+
+        if (memberId) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const memberPlanEndDate = planEndDate ? new Date(planEndDate) : null;
+          memberPlanEndDate?.setHours(0, 0, 0, 0);
+
+          let duesExist = false;
+          if (memberPayments) {
+            const planPayments = memberPayments.filter(p => p.notes !== 'Admission Fee');
+            const latestPlanPayment = planPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0];
+            if (latestPlanPayment && latestPlanPayment.due_amount > 0) {
+              duesExist = true;
+            }
+          }
+
+          const isExpired = memberPlanEndDate ? memberPlanEndDate < today : true; // Assume expired if no end date
+          const isActive = status === 'active';
+
+          if (isExpired || duesExist) {
+            setIsPaymentDue(true);
+            setNoPaymentDueMessage('');
+          } else if (isActive) {
+            setIsPaymentDue(false);
+            setNoPaymentDueMessage('Member\'s current plan is active and fully paid. No payment is due.');
+          } else {
+            setIsPaymentDue(false);
+            setNoPaymentDueMessage('Member is inactive and has no outstanding dues.');
+          }
+        } else {
+          setIsPaymentDue(false);
+          setNoPaymentDueMessage('');
+        }
       };
 
       const handleInputChange = (field: keyof FormData, value: string) => {
@@ -109,9 +150,10 @@ import { useState, useContext } from 'react';
         setIsLoading(true);
         try {
           await createPayment({
-            member_id: String(formData.member_id),
+            member_id: formData.member_id || '', // Ensure member_id is an empty string if falsy
             amount_paid: Number(formData.amount_paid),
             total_amount: Number(formData.total_amount),
+            due_amount: Number(formData.total_amount) - Number(formData.amount_paid), // Calculate due_amount
             payment_date: new Date(formData.payment_date).toISOString().split('T')[0],
             payment_method: formData.payment_method,
             notes: formData.notes
@@ -151,8 +193,13 @@ import { useState, useContext } from 'react';
                   selectedMemberId={formData.member_id}
                   onSelect={handleMemberSelect}
                   error={errors.member_id}
-                  memberplaneamount={formData.memberplaneamount}
+                  memberplaneamount={undefined}
                 />
+                {!isPaymentDue && noPaymentDueMessage && (
+                  <View style={styles.infoMessageContainer}>
+                    <Text style={styles.infoMessageText}>{noPaymentDueMessage}</Text>
+                  </View>
+                )}
               </View>
               
               <View style={styles.section}>
@@ -166,6 +213,7 @@ import { useState, useContext } from 'react';
                   defaultValue={formData.total_amount}
                   error={errors.total_amount}
                   placeholder="Enter total amount"
+                  editable={isPaymentDue}
                 />
                 
                 <Input
@@ -175,6 +223,7 @@ import { useState, useContext } from 'react';
                   keyboardType="numeric"
                   error={errors.amount_paid}
                   placeholder="Enter amount paid"
+                  editable={isPaymentDue}
                 />
                 
                 <View style={styles.row}>
@@ -183,6 +232,7 @@ import { useState, useContext } from 'react';
                       label="Payment Date"
                       value={formData.payment_date}
                       onChange={(date) => handleInputChange('payment_date', date)}
+                      disabled={!isPaymentDue}
                     />
                   </View>
                   
@@ -192,6 +242,7 @@ import { useState, useContext } from 'react';
                       value={formData.payment_method}
                       onChangeText={(value) => handleInputChange('payment_method', value)}
                       placeholder="Cash, Card, etc."
+                      editable={isPaymentDue}
                     />
                   </View>
                 </View>
@@ -203,6 +254,7 @@ import { useState, useContext } from 'react';
                   placeholder="Add any additional notes"
                   multiline
                   numberOfLines={3}
+                  editable={isPaymentDue}
                 />
               </View>
             </View>
@@ -212,7 +264,7 @@ import { useState, useContext } from 'react';
             <Button
               title={isLoading ? 'Recording...' : 'Record Payment'}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !isPaymentDue} // Disable if not due
               loading={isLoading}
             />
           </View>
@@ -258,5 +310,17 @@ import { useState, useContext } from 'react';
         backgroundColor: COLORS.white,
         borderTopWidth: 1,
         borderTopColor: COLORS.lightGray,
+      },
+      infoMessageContainer: {
+        backgroundColor: COLORS.infoLight,
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 10,
+        alignItems: 'center',
+      },
+      infoMessageText: {
+        ...FONTS.body4,
+        color: COLORS.info,
+        textAlign: 'center',
       },
     });

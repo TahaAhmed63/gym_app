@@ -9,6 +9,7 @@ import {
 import { COLORS, FONTS } from '@/constants/theme';
 import { Calendar } from 'lucide-react-native';
 import Button from '@/components/common/Button';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface DateRange {
   startDate: Date | null;
@@ -27,6 +28,7 @@ export default function DateRangePicker({
   const [startDate, setStartDate] = useState<Date | null>(initialRange.startDate);
   const [endDate, setEndDate] = useState<Date | null>(initialRange.endDate);
   const [selectionMode, setSelectionMode] = useState<'start' | 'end'>('start');
+  const [showPicker, setShowPicker] = useState<null | 'start' | 'end'>(null);
   
   // Mock current date for display purposes
   const today = new Date();
@@ -45,16 +47,25 @@ export default function DateRangePicker({
   
   const handleStartDateSelect = () => {
     setSelectionMode('start');
-    // In a real app, this would show a date picker
-    // For this mock, we'll set it to 1 month ago
-    setStartDate(lastMonth);
+    setShowPicker('start');
   };
   
   const handleEndDateSelect = () => {
     setSelectionMode('end');
-    // In a real app, this would show a date picker
-    // For this mock, we'll set it to today
-    setEndDate(today);
+    setShowPicker('end');
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowPicker(null);
+    if (event.type === 'set' && selectedDate) {
+      if (selectionMode === 'start') {
+        setStartDate(selectedDate);
+        // If endDate is before startDate, reset endDate
+        if (endDate && selectedDate > endDate) setEndDate(null);
+      } else {
+        setEndDate(selectedDate);
+      }
+    }
   };
   
   const handleApply = () => {
@@ -114,7 +125,20 @@ export default function DateRangePicker({
           </View>
         </TouchableOpacity>
       </View>
-      
+      {showPicker && (
+        <DateTimePicker
+          value={
+            showPicker === 'start'
+              ? startDate || new Date()
+              : endDate || (startDate || new Date())
+          }
+          mode="date"
+          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          onChange={handleDateChange}
+          minimumDate={showPicker === 'end' && startDate ? startDate : undefined}
+          maximumDate={showPicker === 'start' && endDate ? endDate : undefined}
+        />
+      )}
       <View style={styles.actions}>
         <TouchableOpacity 
           style={styles.clearButton}

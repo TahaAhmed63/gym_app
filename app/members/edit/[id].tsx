@@ -31,6 +31,8 @@ interface MemberData {
     phone: string;
     relationship: string;
   };
+  discount_value?: number; // Add discount_value
+  admission_fees?: number;  // Add admission_fees
 }
 
 export default function EditMemberScreen() {
@@ -70,6 +72,7 @@ export default function EditMemberScreen() {
 
   const handleSubmit = async (formData: any) => {
     setIsSaving(true);
+    console.log('Attempting to save member with ID:', id, 'and data:', formData);
     try {
       const access_token = await AsyncStorage.getItem('access_token');
       const response = await fetch(`https://gymbackend-eight.vercel.app/api/members/${id}`, {

@@ -18,20 +18,23 @@ export interface DashboardData {
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     // Fetch all required data in parallel
-    const [members, paymentStats, payments, expiringMembers] = await Promise.all([
+    const [membersResponse, paymentStats, paymentsResponse, expiringMembers] = await Promise.all([
       fetchMembers(),
       fetchPaymentStats('month'),
       fetchPayments('month'),
       fetchExpiringMembers('10days') // Fetch expiring members for 7 days
     ]);
-
+    console.log(paymentStats,"payment stats")
+    const members = membersResponse.data;
+console.log(members,"testcheck")
+    const payments = paymentsResponse.data;
     // Calculate member statistics
-    const activeMembers = members.filter(m => m.status === 'active').length;
-    const inactiveMembers = members.filter(m => m.status === 'inactive').length;
+    const activeMembers = members?.filter(m => m.status === 'active').length;
+    const inactiveMembers = members?.filter(m => m.status === 'inactive').length;
 
     // Calculate today's check-ins
     const today = new Date().toISOString().split('T')[0];
-    const todayCheckIns = members.filter(m => 
+    const todayCheckIns = members?.filter(m => 
       m.attendance?.some(a => a.date.startsWith(today))
     ).length;
 
@@ -49,13 +52,13 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     const revenueData = processRevenueData(payments);
 console.log(revenueData)
     return {
-      totalMembers: members.length,
+      totalMembers: membersResponse?.meta?.total,
       activeMembers,
       inactiveMembers,
       todayCheckIns,
       expiringSoon,
-      totalRevenue: totalCollectedCalculation(),
-      pendingDues: totalPendingCalculation(),
+      totalRevenue:paymentStats.amount_paid,
+      pendingDues: paymentStats.due_amount,
       revenueData
     };
   } catch (error) {

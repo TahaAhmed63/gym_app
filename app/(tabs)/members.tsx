@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -15,11 +15,11 @@ import { Search, Plus, Filter, Phone, List, Grid2x2 as Grid } from 'lucide-react
 import Header from '@/components/common/Header';
 import MemberCard from '@/components/members/MemberCard';
 import FilterModal from '@/components/members/FilterModal';
-import { fetchMembers } from '@/data/membersService';
+import { fetchMembers, MembersApiResponse } from '@/data/membersService';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 import type { Member } from '@/data/membersService';
+// import { MembersApiResponse } from '@/data/membersService'; // Remove unused type
 
 export default function MembersScreen() {
 const [members, setMembers] = useState<Member[] | null>(null);
@@ -29,32 +29,71 @@ const [members, setMembers] = useState<Member[] | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  const loadMembers = async () => {
-    setIsLoading(true);
+  // Refs to hold current state values for stable useCallback
+  const currentPageRef = useRef(currentPage);
+  const totalPagesRef = useRef(totalPages);
+
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
+  useEffect(() => {
+    totalPagesRef.current = totalPages;
+  }, [totalPages]);
+
+  const loadMembers = useCallback(async (pageToLoad: number = 1, appending: boolean = false) => {
+    console.log(`loadMembers called - pageToLoad: ${pageToLoad}, appending: ${appending}`);
+    if (appending && pageToLoad > totalPagesRef.current) {
+      console.log("loadMembers: Reached end of pages or already loading more.");
+      return;
+    }
+
+    if (appending) {
+      setIsFetchingMore(true);
+    } else {
+      setIsLoading(true);
+    }
+
     try {
-      const data = await fetchMembers();
+      const data: MembersApiResponse = await fetchMembers(pageToLoad);
+      console.log("loadMembers: API Response data:", data);
    
-      setMembers(data);
-      setFilteredMembers(data);
+      setMembers(prevMembers => {
+        console.log("setMembers: Previous members state:", prevMembers);
+        const newMembers: Member[] = data.data || [];
+        console.log("setMembers: New members from API:", newMembers);
+        const combined = appending ? [...(prevMembers || []), ...newMembers] : newMembers;
+        
+        // De-duplicate members based on ID to prevent 'encountered two children with same key'
+        const uniqueMembers = Array.from(new Map(combined.map((member: Member) => [member.id, member])).values());
+        console.log("setMembers: Unique combined members:", uniqueMembers);
+        return uniqueMembers;
+      });
+      setTotalPages(data.meta?.totalPages);
+      setCurrentPage(data.meta?.page);
     } catch (error) {
       console.error('Error loading members:', error);
     } finally {
       setIsLoading(false);
+      setIsFetchingMore(false);
+      console.log("loadMembers completed. isLoading:", isLoading, "isFetchingMore:", isFetchingMore);
     }
-  };
-  useEffect(()=>{
-    loadMembers();
-  },[])
-// console.log(members)
-//   useEffect(()=>{
+  }, []); // Empty dependency array, relies on refs for currentPage and totalPages
 
-//       loadMembers();
-
-// },[]);
+  // Initial load or when search/filter changes
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentPage(1); // Reset page to 1 for new search/filter
+      loadMembers(1, false);
+    }, [loadMembers])
+  );
 
   useEffect(() => {
-
+    console.log("Filtering useEffect triggered. Current members state:", members, "Search Query:", searchQuery, "Filter Status:", filterStatus);
     let result: Member[] = members ?? [];
     
     // Apply status filter
@@ -145,7 +184,7 @@ const [members, setMembers] = useState<Member[] | null>(null);
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <MemberCard 
-              member={{ ...item, join_date: item?.join_date }}
+              member={{ ...item, join_date: item?.join_date, photo: item?.photo || null }}
               onPress={() => router.push(`/members/${item.id}`)}
               viewMode={viewMode as 'grid' | 'list'}
             />
@@ -154,6 +193,20 @@ const [members, setMembers] = useState<Member[] | null>(null);
           key={viewMode === 'grid' ? 'grid' : 'list'}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          onEndReached={() => {
+            if (!isLoading && !isFetchingMore && currentPageRef.current < totalPagesRef.current) {
+              loadMembers(currentPageRef.current + 1, true);
+            }
+          }}
+          onEndReachedThreshold={1} // Trigger when 50% of the list is visible
+          ListFooterComponent={() => (
+            isFetchingMore ? (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <Text style={styles.loadingMoreText}>Loading more members...</Text>
+              </View>
+            ) : null
+          )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No members found</Text>
@@ -257,6 +310,15 @@ const styles = StyleSheet.create({
   emptyText: {
     ...FONTS.body3,
     color: COLORS.darkGray,
+  },
+  loadingMoreContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  loadingMoreText: {
+    ...FONTS.body4,
+    color: COLORS.darkGray,
+    marginTop: 8,
   },
   addButton: {
     position: 'absolute',

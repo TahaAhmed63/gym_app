@@ -200,7 +200,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text style={styles.revenueValue}>
                     {formatCurrency(
-                      dashboardData?.totalRevenue || 0,
+                      parseInt(dashboardData?.totalRevenue || 0),
                       countryCode
                     )}
                   </Text>
@@ -221,7 +221,7 @@ export default function DashboardScreen() {
                 </View>
                 <View>
                   <Text style={styles.revenueValue}>
-                    {formatCurrency(dashboardData?.pendingDues || 0, countryCode)}
+                    {formatCurrency( parseInt(dashboardData?.pendingDues || 0), countryCode)}
                   </Text>
                   <Text style={styles.revenueLabel}>Pending Dues</Text>
                 </View>
