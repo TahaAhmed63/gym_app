@@ -114,10 +114,11 @@ export default function PaymentsScreen() {
       reader.onloadend = async () => {
         if (!reader.result) return;
         const base64data = typeof reader.result === 'string' ? reader.result.split(',')[1] : '';
-        const fileUri = `${FileSystem.documentDirectory}payments_export.xlsx`;
+        // use cacheDirectory for a reliable write location and plain 'base64' encoding
+  const fileUri = `${(FileSystem as any).cacheDirectory}payments_export.xlsx`;
         await FileSystem.writeAsStringAsync(fileUri, base64data, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+          encoding: 'base64',
+        } as any);
         if (await Sharing.isAvailableAsync()) {
           await Sharing.shareAsync(fileUri);
         } else {
@@ -137,7 +138,7 @@ console.log(stats,"new stats")
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Header title="Payments" />
       
       {/* Stats Section */}
@@ -229,7 +230,7 @@ console.log(stats,"new stats")
           style={styles.exportButton}
           onPress={handleExport}
         >
-          <Download size={16} color={COLORS.primary} />
+          <Download size={16} color={COLORS.white} />
           <Text style={styles.exportText}>Export</Text>
         </TouchableOpacity>
       </View>
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   statCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     width: '48%',
@@ -289,12 +290,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 4,
   },
   statLabel: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
     marginBottom: 8,
   },
   statBadge: {
@@ -319,7 +320,7 @@ const styles = StyleSheet.create({
   periodButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 20,
     marginRight: 8,
     ...SIZES.shadow,
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
   },
   periodText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.white,
   },
   activePeriodText: {
     color: COLORS.white,
@@ -344,18 +345,18 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   exportButton: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
     borderRadius: 8,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.primary,
   },
   exportText: {
     ...FONTS.body4,
-    color: COLORS.primary,
+    color: COLORS.white,
     marginLeft: 4,
   },
   paymentsContainer: {
@@ -373,7 +374,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...FONTS.body3,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
   addButton: {
     position: 'absolute',

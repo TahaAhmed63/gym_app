@@ -160,14 +160,14 @@ export default function DateRangePicker({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
   },
   title: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     fontFamily: 'Inter-SemiBold',
     marginBottom: 16,
   },
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     width: '48%',
     padding: 12,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 8,
   },
   activeDateSelector: {
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   dateSelectorLabel: {
     ...FONTS.caption,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
     marginBottom: 8,
   },
   dateValueContainer: {
@@ -198,11 +198,11 @@ const styles = StyleSheet.create({
   },
   dateValue: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginLeft: 8,
   },
   placeholderText: {
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
   actions: {
     flexDirection: 'row',
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
   applyButton: {
     width: '40%',

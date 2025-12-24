@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   chartContainer: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   chartAction: {
     ...FONTS.body4,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   revenueValue: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   revenueLabel: {
     ...FONTS.body4,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   actionsContainer: {
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionButton: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
@@ -421,6 +421,6 @@ const styles = StyleSheet.create({
   },
   actionText: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
 });

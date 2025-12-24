@@ -47,7 +47,7 @@ export default function TimePicker({ value, onChange, label, error, disabled }: 
         onPress={() => !disabled && setShow(true)}
         disabled={disabled}
       >
-        <Clock size={20} color={COLORS.darkGray} />
+        <Clock size={20} color={COLORS.lightGray} />
         <Text style={[styles.input, disabled && styles.textDisabled]}>
           {value ? formatTime(value) : 'Select time'}
         </Text>
@@ -73,15 +73,15 @@ const styles = StyleSheet.create({
   },
   label: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 8,
     padding: 12,
   },
@@ -89,17 +89,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   inputError: {
     borderColor: COLORS.error,
   },
   inputDisabled: {
-    backgroundColor: COLORS.lightGray,
-    opacity: 0.7,
+    backgroundColor: COLORS.surfaceLight,
+    opacity: 0.9,
   },
   textDisabled: {
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
   errorText: {
     ...FONTS.caption,

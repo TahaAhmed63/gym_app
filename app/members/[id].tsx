@@ -457,13 +457,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
     padding: 20,
   },
   errorText: {
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   memberStatus: {
     ...FONTS.body4,
     color: COLORS.white,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 12,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 8,
     marginHorizontal: 16,
     marginTop: 16,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.white,
     marginLeft: 8,
   },
   activeTabText: {
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   infoSection: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   infoRow: {
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.surfaceLight,
   },
   infoLabel: {
     ...FONTS.body4,
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   batchContainer: {
     backgroundColor: COLORS.infoLight,
@@ -650,12 +650,13 @@ const styles = StyleSheet.create({
   expiryText: {
     ...FONTS.body3,
     marginLeft: 4,
+    color: COLORS.white,
   },
   paymentContainer: {
     padding: 16,
   },
   paymentCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -681,7 +682,7 @@ const styles = StyleSheet.create({
   },
   paymentPlan: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   paymentPeriod: {
     ...FONTS.body4,
@@ -692,7 +693,7 @@ const styles = StyleSheet.create({
   },
   paymentAmount: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   paymentDue: {
     ...FONTS.body4,
@@ -735,7 +736,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   emptyContainer: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 40,
     alignItems: 'center',

@@ -6,7 +6,8 @@ import { formatCurrency } from '@/utils/currency';
 interface PaymentCardProps {
   payment: {
     id: number;
-    name: string;
+    name?: string;
+    members?: { name?: string };
     total_amount: number;
     amount_paid: number;
     due_amount: number;
@@ -66,14 +67,14 @@ export default function PaymentCard({ payment, onPress,coutrycode }: PaymentCard
     >
       <View style={styles.header}>
         <View style={styles.memberInfo}>
-          <User size={16} color={COLORS.darkGray} />
+          <User size={16} color={COLORS.lightGray} />
           <Text style={styles.memberName}>{payment?.members?.name}</Text>
         </View>
         
         <View 
           style={[
             styles.statusBadge, 
-            { backgroundColor: getStatusColor(payment?.due_amount > 0 ? 'pending' : 'paid') + '20' }
+            { backgroundColor: getStatusColor(payment?.due_amount > 0 ? 'pending' : 'paid') + '22' }
           ]}
         >
           <Text 
@@ -93,15 +94,15 @@ export default function PaymentCard({ payment, onPress,coutrycode }: PaymentCard
           <Text style={styles.plan}>{payment.due_amount}</Text>
           
           <View style={styles.dateContainer}>
-            <Calendar size={14} color={COLORS.darkGray} />
-            <Text style={styles.date}>{formatDate(payment.payment_date)}</Text>
+            <Calendar size={14} color={COLORS.lightGray} />
+              <Text style={styles.date}>{formatDate(payment.payment_date)}</Text>
           </View>
         </View>
         
         <View style={styles.methodContainer}>
           <Text style={styles.methodLabel}>Method</Text>
-          <Text style={styles.methodValue}>{payment.payment_method}</Text>
-          <ChevronRight size={20} color={COLORS.darkGray} />
+            <Text style={styles.methodValue}>{payment.payment_method}</Text>
+            <ChevronRight size={20} color={COLORS.lightGray} />
         </View>
       </View>
     </TouchableOpacity>
@@ -110,7 +111,7 @@ export default function PaymentCard({ payment, onPress,coutrycode }: PaymentCard
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginLeft: 8,
   },
   statusBadge: {
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   },
   amount: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 4,
   },
   plan: {
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   },
   methodValue: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 4,
   },
 });

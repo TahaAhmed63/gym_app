@@ -140,7 +140,7 @@ export default function ReportCard({ item, type }: ReportCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   name: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 4,
     fontFamily: 'Inter-SemiBold',
   },
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
+    borderTopColor: COLORS.surfaceLight,
   },
   actionButton: {
     flexDirection: 'row',

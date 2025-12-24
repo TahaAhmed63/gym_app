@@ -74,8 +74,16 @@ export default function EditPaymentScreen() {
     }
   };
 
-  const handleMemberSelect = (memberId: number) => {
-    setFormData(prev => ({ ...prev, member_id: memberId.toString() }));
+  const handleMemberSelect = (
+    memberId: string | number,
+    planAmount?: number,
+    discountValue?: number,
+    admissionFees?: number,
+    planEndDate?: string,
+    status?: 'active'|'inactive',
+    memberPayments?: Array<any>
+  ) => {
+    setFormData(prev => ({ ...prev, member_id: memberId?.toString?.() ?? '' }));
     setErrors(prev => ({ ...prev, member_id: '' }));
   };
 
@@ -166,10 +174,10 @@ export default function EditPaymentScreen() {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <Header 
           title="Edit Payment"
-          leftIcon={<ArrowLeft size={24} color={COLORS.black} />}
+          leftIcon={<ArrowLeft size={24} color={COLORS.white} />}
           onLeftPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
@@ -181,10 +189,10 @@ export default function EditPaymentScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Header 
         title="Edit Payment"
-        leftIcon={<ArrowLeft size={24} color={COLORS.black} />}
+        leftIcon={<ArrowLeft size={24} color={COLORS.white} />}
         onLeftPress={() => router.back()}
         rightIcon={<Trash2 size={24} color={COLORS.error} />}
         onRightPress={handleDelete}
@@ -284,14 +292,14 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   section: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     ...SIZES.shadow,
   },
   sectionTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   row: {
@@ -303,9 +311,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
+    borderTopColor: COLORS.surfaceLight,
   },
   loadingContainer: {
     flex: 1,

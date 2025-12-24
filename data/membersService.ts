@@ -74,7 +74,7 @@ export interface MembersApiResponse {
   };
 }
 
-export async function fetchMembers(page: number = 1, limit: number = 10): Promise<MembersApiResponse> {
+export async function fetchMembers(page: number = 1, limit: number = 50): Promise<MembersApiResponse> {
   try {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE_URL}/members?page=${page}&limit=${limit}`, {

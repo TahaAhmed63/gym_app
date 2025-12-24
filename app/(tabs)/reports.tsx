@@ -98,7 +98,7 @@ export default function ReportsScreen() {
   
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Header title="Reports" />
       
       <View style={styles.tabContainer}>
@@ -106,7 +106,7 @@ export default function ReportsScreen() {
           style={[styles.tab, activeTab === 'expiry' && styles.activeTab]}
           onPress={() => handleTabChange('expiry')}
         >
-          <Clock size={20} color={activeTab === 'expiry' ? COLORS.primary : COLORS.darkGray} />
+          <Clock size={20} color={activeTab === 'expiry' ? COLORS.primary : COLORS.lightGray} />
           <Text style={[styles.tabText, activeTab === 'expiry' && styles.activeTabText]}>
             Expiry Reports
           </Text>
@@ -116,7 +116,7 @@ export default function ReportsScreen() {
           style={[styles.tab, activeTab === 'birthday' && styles.activeTab]}
           onPress={() => handleTabChange('birthday')}
         >
-          <Cake size={20} color={activeTab === 'birthday' ? COLORS.primary : COLORS.darkGray} />
+          <Cake size={20} color={activeTab === 'birthday' ? COLORS.primary : COLORS.lightGray} />
           <Text style={[styles.tabText, activeTab === 'birthday' && styles.activeTabText]}>
             Birthday Reports
           </Text>
@@ -188,7 +188,7 @@ export default function ReportsScreen() {
           style={styles.exportButton}
           onPress={() => handleDownload(activeTab === 'expiry' ? 'expiry' : 'birthday')}
         >
-          <Download size={16} color={COLORS.primary} />
+          <Download size={16} color={COLORS.white} />
           <Text style={styles.exportText}>Export</Text>
         </TouchableOpacity>
       </View>
@@ -208,7 +208,7 @@ export default function ReportsScreen() {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <AlertCircle size={48} color={COLORS.darkGray} />
+            <AlertCircle size={48} color={COLORS.lightGray} />
             <Text style={styles.emptyText}>
               {activeTab === 'expiry' 
                 ? 'No expiring memberships found'
@@ -228,44 +228,44 @@ export default function ReportsScreen() {
             style={styles.downloadCard}
             onPress={() => handleDownload('all')}
           >
-            <View style={[styles.downloadIcon, { backgroundColor: COLORS.primaryLight }]}>
+            <View style={[styles.downloadIcon, { backgroundColor: COLORS.surfaceLight }]}>
               <UserRound size={24} color={COLORS.primary} />
             </View>
             <Text style={styles.downloadLabel}>All Members</Text>
-            <ArrowRight size={16} color={COLORS.darkGray} />
+            <ArrowRight size={16} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.downloadCard}
             onPress={() => handleDownload('active')}
           >
-            <View style={[styles.downloadIcon, { backgroundColor: COLORS.successLight }]}>
+            <View style={[styles.downloadIcon, { backgroundColor: COLORS.surfaceLight }]}>
               <UserRound size={24} color={COLORS.success} />
             </View>
             <Text style={styles.downloadLabel}>Active Members</Text>
-            <ArrowRight size={16} color={COLORS.darkGray} />
+            <ArrowRight size={16} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.downloadCard}
             onPress={() => handleDownload('inactive')}
           >
-            <View style={[styles.downloadIcon, { backgroundColor: COLORS.errorLight }]}>
+            <View style={[styles.downloadIcon, { backgroundColor: COLORS.surfaceLight }]}>
               <UserRound size={24} color={COLORS.error} />
             </View>
             <Text style={styles.downloadLabel}>Inactive Members</Text>
-            <ArrowRight size={16} color={COLORS.darkGray} />
+            <ArrowRight size={16} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.downloadCard}
             onPress={() => handleDownload('partial')}
           >
-            <View style={[styles.downloadIcon, { backgroundColor: COLORS.warningLight }]}>
+            <View style={[styles.downloadIcon, { backgroundColor: COLORS.surfaceLight }]}>
               <CreditCard size={24} color={COLORS.warning} />
             </View>
             <Text style={styles.downloadLabel}>Partial Payments</Text>
-            <ArrowRight size={16} color={COLORS.darkGray} />
+            <ArrowRight size={16} color={COLORS.lightGray} />
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -288,21 +288,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 8,
     marginRight: 12,
     ...SIZES.shadow,
   },
   activeTab: {
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.primary,
   },
   tabText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
     marginLeft: 8,
   },
   activeTabText: {
-    color: COLORS.primary,
+    color: COLORS.white,
     fontFamily: 'Inter-Medium',
   },
   timeframeContainer: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   timeframeButton: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   timeframeText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.white,
   },
   activeTimeframeText: {
     color: COLORS.white,
@@ -336,18 +336,18 @@ const styles = StyleSheet.create({
   },
   reportTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   exportButton: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
     borderRadius: 8,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.primary,
   },
   exportText: {
     ...FONTS.body4,
-    color: COLORS.primary,
+    color: COLORS.white,
     marginLeft: 4,
   },
   reportContainer: {
@@ -361,25 +361,25 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     ...FONTS.body3,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
     marginTop: 16,
     textAlign: 'center',
   },
   downloadSection: {
     padding: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
+    borderTopColor: COLORS.surfaceLight,
   },
   downloadTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   downloadCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 12,
     marginRight: 12,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   downloadLabel: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
     flex: 1,
   },
 });

@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ImageBackground } from 'react-native';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
-import { Phone, Calendar } from 'lucide-react-native';
+import { Phone, Calendar, MoreHorizontal } from 'lucide-react-native';
 
 interface MemberCardProps {
   member: {
@@ -10,16 +10,17 @@ interface MemberCardProps {
     email: string;
     status: string;
     plan: string;
-    join_date: string;
-    photo: string | null; // Changed to explicitly allow null
-    plan_end_date: string;
+    join_date?: string;
+    photo?: string | null;
+    plan_end_date?: string;
   };
   onPress: () => void;
   viewMode: 'grid' | 'list';
 }
 
 export default function MemberCard({ member, onPress, viewMode }: MemberCardProps) {
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string = '') => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -27,7 +28,14 @@ export default function MemberCard({ member, onPress, viewMode }: MemberCardProp
       day: 'numeric'
     });
   };
-  console.log(member,"member")
+  const formatShortDate = (dateString: string = '') => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
   const getStatusColor = (status: string) => {
     return status === 'active' ? COLORS.success : COLORS.error;
   };
@@ -85,42 +93,62 @@ export default function MemberCard({ member, onPress, viewMode }: MemberCardProp
       </TouchableOpacity>
     );
   }
-
   return (
     <TouchableOpacity
       style={styles.gridCard}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={`${member.name}, ${member.status} member`}
     >
-      <View style={styles.gridStatusDotContainer}>
-        <View
-          style={[
-            styles.statusDot,
-            { backgroundColor: getStatusColor(member.status) }
-          ]}
-        />
-      </View>
-      <View style={styles.gridPhotoContainer}>
-        {member.photo ? (
-          <Image source={{ uri: member.photo }} style={styles.gridPhoto} />
-        ) : (
-          <View style={styles.gridInitialsPlaceholder}>
-            <Text style={styles.gridInitialsText}>
-              {member.name.split(' ').map(n => n[0]).join('')}
-            </Text>
+      {/* image as full card background */}
+      { (member.photo && member.photo.length > 0) ? (
+        <ImageBackground source={{ uri: member.photo }} style={styles.imageBg} imageStyle={styles.imageStyle}>
+          <View style={styles.overlay} />
+
+          <View style={styles.dateBadge}>
+            <Calendar size={12} color={COLORS.white} />
+            <Text style={styles.dateBadgeText}>{formatShortDate(member.join_date || member.plan_end_date || '')}</Text>
           </View>
-        )}
-      </View>
 
-      <Text style={styles.gridMemberName}>{member.name}</Text>
-      <Text style={styles.gridMemberPlan}>{member.plan}</Text>
+          <View style={styles.bottomInfo}>
+            <View style={styles.topRow}>
+              <View style={styles.textBlock}>
+                <Text style={styles.gridMemberNameSmall} numberOfLines={1} ellipsizeMode="tail">{member.name}</Text>
+                <Text style={styles.gridMemberPlan} numberOfLines={1} ellipsizeMode="tail">{member.plan}</Text>
+              </View>
+            </View>
 
-      <View style={styles.gridExpiry}>
-        <Calendar size={16} color={COLORS.darkGray} />
-        <Text style={styles.gridExpiryText}>
-          Expires: {formatDate(member.plan_end_date)}
-        </Text>
-      </View>
+            <View style={styles.statusRow}>
+              <View style={styles.statusPill}>
+                <Text style={styles.statusPillText}>{member.status === 'active' ? 'Active' : 'Inactive'}</Text>
+              </View>
+            </View>
+          </View>
+        </ImageBackground>
+      ) : (
+        <ImageBackground source={{ uri: 'https://i.pravatar.cc/400?img=65' }} style={[styles.imageBg, styles.noImageBg]} imageStyle={styles.imageStyle}>
+          <View style={styles.overlay} />
+
+          <View style={styles.dateBadge}>
+            <Calendar size={12} color={COLORS.white} />
+            <Text style={styles.dateBadgeText}>{formatShortDate(member.join_date || member.plan_end_date || '')}</Text>
+          </View>
+          <View style={styles.bottomInfo}>
+            <View style={styles.topRow}>
+              <View style={styles.textBlock}>
+                <Text style={styles.gridMemberNameSmall} numberOfLines={1} ellipsizeMode="tail">{member.name}</Text>
+                <Text style={styles.gridMemberPlan} numberOfLines={1} ellipsizeMode="tail">{member.plan}</Text>
+              </View>
+            </View>
+            <View style={styles.statusRow}>
+              <View style={styles.statusPill}>
+                <Text style={styles.statusPillText}>{member.status === 'active' ? 'Active' : 'Inactive'}</Text>
+              </View>
+            </View>
+          </View>
+        </ImageBackground>
+      )}
     </TouchableOpacity>
   );
 }
@@ -128,7 +156,7 @@ export default function MemberCard({ member, onPress, viewMode }: MemberCardProp
 const styles = StyleSheet.create({
   listCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16, // Slightly more rounded
     padding: 16, // More padding
     marginBottom: 12,
@@ -168,7 +196,7 @@ const styles = StyleSheet.create({
   },
   listMemberName: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 2, // Less space
   },
   listMemberPlan: {
@@ -206,74 +234,249 @@ const styles = StyleSheet.create({
 
   // Grid View Styles
   gridCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16, // Consistent with list card
-    padding: 16, // Consistent with list card
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 0,
     marginBottom: 12,
-    width: '48%',
-    marginHorizontal: '1%',
-    alignItems: 'center', // Center items for grid view
+  // let FlatList column wrapper control spacing, make card flexible
+  flex: 1,
+  minWidth: 0,
+  marginHorizontal: 6,
+  alignItems: 'flex-start',
     ...SIZES.shadow,
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    overflow: Platform.OS === 'android' ? 'hidden' : undefined,
   },
-  gridStatusDotContainer: {
-    position: 'absolute', // Position status dot
-    top: 10,
-    right: 10,
-    zIndex: 1,
+  imageBg: {
+    width: '100%',
+    height: 140,
+    borderRadius: 16,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    backgroundColor: COLORS.surfaceLight,
+    position: 'relative',
   },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  imageStyle: {
+    resizeMode: 'cover',
   },
-  gridPhotoContainer: {
-    marginBottom: 16, // More space below photo
+  noImageBg: {
+    backgroundColor: COLORS.surfaceLight,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(6,4,10,0.38)'
+  },
+  imageWrap: {
+    width: '100%',
+    height: 140,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: COLORS.surfaceLight,
   },
   gridInitialsPlaceholder: {
-    width: 100, // Larger
-    height: 100,
-    borderRadius: 50, // Circular
-    backgroundColor: COLORS.primaryLight,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: COLORS.lightGray, // Subtle border
-    borderWidth: 1,
+    backgroundColor: COLORS.primaryLight,
   },
   gridInitialsText: {
-    ...FONTS.h1, // Larger text for initials
+    ...FONTS.h1,
     color: COLORS.primary,
   },
   gridPhoto: {
-    width: 100, // Larger
-    height: 100,
-    borderRadius: 50, // Circular
-    borderColor: COLORS.lightGray, // Subtle border
-    borderWidth: 1,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  cardBody: {
+    padding: 12,
+    width: '100%',
   },
   gridMemberName: {
-    ...FONTS.h3, // Larger name font
-    color: COLORS.black,
-    marginBottom: 4,
-    textAlign: 'center',
+    ...FONTS.body4,
+    color: COLORS.white,
+    marginBottom: 2,
   },
   gridMemberPlan: {
-    ...FONTS.body3, // Larger plan font
-    color: COLORS.darkGray,
-    marginBottom: 12, // More space
-    textAlign: 'center',
+    ...FONTS.body4,
+    color: COLORS.lightGray,
+    marginBottom: 8,
   },
   gridExpiry: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 'auto', // Push to bottom if card height varies
   },
   gridExpiryText: {
-    ...FONTS.body4, // Consistent with metaText
-    color: COLORS.darkGray,
+    ...FONTS.body4,
+    color: COLORS.lightGray,
     marginLeft: 6,
+  },
+
+  bottomInfo: {
+    width: '100%',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  textBlock: {
+    flex: 1,
+  },
+  statusColumn: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  gridMemberNameSmall: {
+    ...FONTS.caption,
+    color: COLORS.white,
+    marginBottom: 4,
+    maxWidth: 140,
+    textAlign: 'left',
+  },
+  topRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statusRow: {
+    width: '100%',
+    marginTop: 4,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  rowRight: {
+    alignItems: 'flex-end',
+    marginLeft: 8,
+  },
+  expiryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  expiryText: {
+    ...FONTS.caption,
+    color: COLORS.lightGray,
+    marginLeft: 6,
+  },
+
+  statusPillAbsolute: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 5,
+  },
+
+  // Overlays / badges
+  statBadge: {
+    position: 'absolute',
+    left: 12,
+    bottom: 12,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(155,92,255,0.18)'
+  },
+  statBadgeText: {
+    ...FONTS.caption,
+    color: COLORS.white,
+    fontFamily: 'Inter-SemiBold',
+  },
+  statusPill: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    ...SIZES.shadow,
+  },
+  statusPillText: {
+    ...FONTS.caption,
+    color: COLORS.white,
+    fontFamily: 'Inter-Medium',
+  },
+  moreButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(20,19,26,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  dateBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(155,92,255,0.12)',
+    zIndex: 5,
+  },
+  dateBadgeText: {
+    ...FONTS.caption,
+    color: COLORS.white,
+    marginLeft: 6,
+  },
+  portraitWrap: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  portrait: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+  },
+  portraitPlaceholder: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: COLORS.surfaceLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  percentText: {
+    ...FONTS.h4,
+    color: COLORS.lightGray,
+  },
+  planPill: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 18,
+  },
+  planPillText: {
+    ...FONTS.caption,
+    color: COLORS.white,
+    fontFamily: 'Inter-Medium',
   },
 });

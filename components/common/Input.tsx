@@ -9,7 +9,7 @@ interface InputProps extends TextInputProps {
 
 export default function Input({ label, error, style, ...props }: InputProps) {
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, (style as any)]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
         style={[
@@ -31,17 +31,17 @@ const styles = StyleSheet.create({
   },
   label: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 8,
     padding: 12,
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   inputError: {
     borderColor: COLORS.error,

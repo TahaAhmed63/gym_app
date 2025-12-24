@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { COLORS, FONTS, SIZES } from '@/constants/theme';
 
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system'; // Import FileSystem
+import * as FileSystem from 'expo-file-system';
 import Button from '@/components/common/Button';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchBatches } from '@/data/BatchService';
@@ -26,8 +26,8 @@ interface MemberFormProps {
     dob: string;
     gender: string;
     address: string;
-    batch: string;
-    plan: string;
+    batch?: string | null;
+    plan?: string | null;
     status?: 'active' | 'inactive';
     photo?: string;
     emergency?: {
@@ -36,9 +36,13 @@ interface MemberFormProps {
       relationship: string;
     };
     joinDate?: string;
-    discount_value?: number; // Add discount_value
-    admission_fees?: number;  // Add admission_fees
-    amount_paid?: number; // Add amount_paid
+    join_date?: string;
+    discount_value?: number;
+    admission_fees?: number;
+    amount_paid?: number;
+    plan_id?: string;
+    batch_id?: string | null;
+    plans?: { id: string; name: string; price: number };
   };
   onSubmit: (data: any) => void;
   isLoading?: boolean;
@@ -61,21 +65,52 @@ interface FormData {
     relationship: string;
   };
   joinDate: string;
-  discount_value: string; // Change to string for TextInput
-  admission_fees: string;  // Change to string for TextInput
-  amount_paid: string; // Add amount_paid as string for TextInput
+  discount_value: string;
+  admission_fees: string;
+  amount_paid: string;
 }
 
 export default function MemberForm({ initialData, onSubmit, isLoading }: MemberFormProps) {
+  // Determine joinDate and plan for edit mode
+  const isUpdate = !!initialData;
+  // Use join_date if present, else joinDate, else today
+  const initialJoinDateRaw =
+    (initialData?.join_date || initialData?.joinDate) ??
+    new Date().toISOString().split('T')[0];
+  // Always keep joinDate as YYYY-MM-DD
+  const initialJoinDate = initialJoinDateRaw
+    ? new Date(initialJoinDateRaw).toISOString().split('T')[0]
+    : new Date().toISOString().split('T')[0];
+
+  // For plan, prefer plan_id, else plan, else plans.id, else ''
+  let initialPlan = '';
+  if (initialData?.plan_id) {
+    initialPlan = initialData.plan_id;
+  } else if (initialData?.plan) {
+    initialPlan = initialData.plan;
+  } else if (initialData?.plans?.id) {
+    initialPlan = initialData.plans.id;
+  }
+
+  // For batch, prefer batch_id, else batch, else ''
+  let initialBatch = '';
+  if (initialData?.batch_id) {
+    initialBatch = initialData.batch_id;
+  } else if (initialData?.batch) {
+    initialBatch = initialData.batch;
+  }
+
   const [formData, setFormData] = useState<FormData>({
     name: initialData?.name || '',
     phone: initialData?.phone || '',
     email: initialData?.email || '',
-    dob: initialData?.dob ? new Date(initialData.dob).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    dob: initialData?.dob
+      ? new Date(initialData.dob).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0],
     gender: initialData?.gender || 'male',
     address: initialData?.address || '',
-    batch: initialData?.batch || '',
-    plan: initialData?.plan || '',
+    batch: initialBatch,
+    plan: initialPlan,
     status: initialData?.status || 'active',
     photo: initialData?.photo || null,
     emergency: {
@@ -83,25 +118,34 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       phone: initialData?.emergency?.phone || '',
       relationship: initialData?.emergency?.relationship || '',
     },
-    joinDate: initialData?.joinDate
-      ? new Date(initialData.joinDate).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0],
-    discount_value: initialData?.discount_value?.toString() || '', // Initialize as string
-    admission_fees: initialData?.admission_fees?.toString() || '',  // Initialize as string
-    amount_paid: initialData?.amount_paid?.toString() || '', // Initialize as string
+    joinDate: initialJoinDate,
+    discount_value: initialData?.discount_value !== undefined && initialData?.discount_value !== null
+      ? initialData.discount_value.toString()
+      : '',
+    admission_fees: initialData?.admission_fees !== undefined && initialData?.admission_fees !== null
+      ? initialData.admission_fees.toString()
+      : '',
+    amount_paid: initialData?.amount_paid !== undefined && initialData?.amount_paid !== null
+      ? initialData.amount_paid.toString()
+      : '',
   });
+
   const { user } = useAuth();
 
+  // For displaying the join date in a user-friendly format
   const [displayDate, setDisplayDate] = useState(
     initialData?.dob ? new Date(initialData.dob).toLocaleDateString() : new Date().toLocaleDateString()
   );
+  // For join date, use join_date or joinDate from initialData
   const [displayJoinDate, setDisplayJoinDate] = useState(
-    initialData?.joinDate ? new Date(initialData.joinDate).toLocaleDateString() : new Date().toLocaleDateString()
+    (initialData?.join_date || initialData?.joinDate)
+      ? new Date(initialData?.join_date || initialData?.joinDate as string).toLocaleDateString()
+      : new Date().toLocaleDateString()
   );
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showJoinDatePicker, setShowJoinDatePicker] = useState(false);
-  const [showImageSourceOptions, setShowImageSourceOptions] = useState(false); // New state for image source options
+  const [showImageSourceOptions, setShowImageSourceOptions] = useState(false);
 
   const [plans, setPlans] = useState<Array<{ id: string; name: string; price: number }>>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -110,6 +154,8 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
   const [errorBatches, setErrorBatches] = useState<string | null>(null);
 
   const { showLoading, hideLoading } = useLoading();
+
+  const [plansLoaded, setPlansLoaded] = useState(false);
 
   const fetchData = async () => {
     showLoading();
@@ -134,6 +180,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       const data = await response.json();
       if (data.success) {
         setPlans(data.data);
+        setPlansLoaded(true);
       } else {
         throw new Error(data.message || 'Failed to fetch plans');
       }
@@ -157,7 +204,49 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When plans are loaded and this is an update, ensure the selected plan is set to the previous one
+  useEffect(() => {
+    if (plansLoaded && isUpdate) {
+      // If the plan in formData is not set or doesn't match any plan, set it to initialData's plan_id/plan/plans.id
+      let planIdToSet = '';
+      if (initialData?.plan_id) {
+        planIdToSet = initialData.plan_id;
+      } else if (initialData?.plan) {
+        planIdToSet = initialData.plan;
+      } else if (initialData?.plans?.id) {
+        planIdToSet = initialData.plans.id;
+      }
+      if (planIdToSet && (!formData.plan || !plans.some(p => p.id === formData.plan))) {
+        setFormData(prev => ({
+          ...prev,
+          plan: planIdToSet
+        }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plansLoaded, isUpdate, initialData, plans]);
+
+  // When batches are loaded and this is an update, ensure the selected batch is set to the previous one
+  useEffect(() => {
+    if (batches.length > 0 && isUpdate) {
+      let batchIdToSet = '';
+      if (initialData?.batch_id) {
+        batchIdToSet = initialData.batch_id;
+      } else if (initialData?.batch) {
+        batchIdToSet = initialData.batch;
+      }
+      if (batchIdToSet && (!formData.batch || !batches.some(b => b.id === formData.batch))) {
+        setFormData(prev => ({
+          ...prev,
+          batch: batchIdToSet
+        }));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batches, isUpdate, initialData]);
 
   const countryCode = user?.country ? COUNTRY_TO_CODE[user.country] || 'US' : 'US';
 
@@ -200,9 +289,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
     }
   };
 
-  // Helper to get file info for FormData
   const getImageFileInfo = (uri: string) => {
-    // Try to extract filename and type from uri
     let filename = uri.split('/').pop() || 'photo.jpg';
     let match = /\.(\w+)$/.exec(filename);
     let type = match ? `image/${match[1]}` : `image`;
@@ -211,27 +298,19 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
 
   const handleSubmit = async () => {
     try {
-      // Validate required fields
-      if (!formData.name || !formData.phone || !formData.email || !formData.plan ) {
+      if (!formData.name || !formData.phone  || !formData.plan) {
         Alert.alert('Error', 'Please fill in all required fields');
         return;
       }
 
-      // Find the selected plan by id
       const selectedPlan = plans.find(p => p.id === formData.plan);
       if (!selectedPlan) {
         Alert.alert('Error', 'Please select a valid plan');
         return;
       }
 
-      // Find the selected batch by id
       const selectedBatch = batches.find(b => b?.id === formData.batch);
-      // // if (!selectedBatch) {
-      // //   Alert.alert('Error', 'Please select a valid batch');
-      // //   return;
-      // }
 
-      // Validate amount_paid against calculatedTotalAmount
       const amountPaid = parseFloat(formData.amount_paid) || 0;
       if (amountPaid > calculatedTotalAmount) {
         Alert.alert('Error', 'Amount Paid cannot be greater than the Calculated Total Amount');
@@ -241,7 +320,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       const memberData = {
         name: formData.name,
         phone: formData.phone,
-        email: formData.email,
+        email: formData.email ? formData.email : null,
         dob: formData.dob,
         gender: formData.gender,
         address: formData.address || "test",
@@ -268,7 +347,7 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
-      base64: true, // Request base64 data
+      base64: true,
     });
 
     if (!result.canceled) {
@@ -300,7 +379,10 @@ export default function MemberForm({ initialData, onSubmit, isLoading }: MemberF
   };
 
   const selectedPlan = plans.find(p => p.id === formData.plan);
-  const calculatedTotalAmount = (selectedPlan?.price || 0) - (parseFloat(formData.discount_value || '0') || 0) + (parseFloat(formData.admission_fees || '0') || 0);
+  const calculatedTotalAmount =
+    (selectedPlan?.price || 0) -
+    (parseFloat(formData.discount_value || '0') || 0) +
+    (parseFloat(formData.admission_fees || '0') || 0);
 
   return (
     <ScrollView
@@ -589,14 +671,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.surfaceLight,
   },
   photoSection: {
     alignItems: 'center',
     paddingVertical: 24,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     marginBottom: 16,
     ...SIZES.shadow,
   },
@@ -618,7 +700,7 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.surfaceLight,
   },
   photoPlaceholderText: {
     ...FONTS.body4,
@@ -635,14 +717,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   content: {
     flex: 1,
     padding: 16,
   },
   section: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -650,14 +732,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 56,
@@ -667,7 +749,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...FONTS.body3,
     marginLeft: 12,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   row: {
     flexDirection: 'row',
@@ -676,12 +758,12 @@ const styles = StyleSheet.create({
   },
   planButton: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     alignItems: 'center',
   },
   selectedPlan: {
@@ -690,7 +772,7 @@ const styles = StyleSheet.create({
   },
   planText: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 4,
   },
   planPrice: {
@@ -703,12 +785,12 @@ const styles = StyleSheet.create({
   },
   batchButton: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 12,
     padding: 12,
     marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     alignItems: 'center',
   },
   selectedBatch: {
@@ -717,7 +799,7 @@ const styles = StyleSheet.create({
   },
   batchText: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   selectedBatchText: {
     color: COLORS.primary,
@@ -734,14 +816,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
   },
   statusLabel: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   statusToggle: {
     flexDirection: 'row',
@@ -759,22 +841,22 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 12,
     marginBottom: 16,
   },
   picker: {
     width: '100%',
     height: 56,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   loadingContainer: {
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 12,
   },
   loadingText: {
@@ -810,10 +892,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
   },
   infoLabel: {
     ...FONTS.body3,
@@ -831,7 +913,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',

@@ -67,7 +67,7 @@ import { useState, useContext } from 'react';
         admissionFees?: number,
         planEndDate?: string,
         status?: 'active' | 'inactive',
-        memberPayments?: Array<{ due_amount: number, notes?: string }>
+        memberPayments?: Array<{ due_amount: number, notes?: string, payment_date?: string }>
       ) => {
         const calculatedTotal = (planAmount || 0) - (discountValue || 0);
         setFormData(prev => ({
@@ -87,7 +87,11 @@ import { useState, useContext } from 'react';
           let duesExist = false;
           if (memberPayments) {
             const planPayments = memberPayments.filter(p => p.notes !== 'Admission Fee');
-            const latestPlanPayment = planPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0];
+            const latestPlanPayment = planPayments.sort((a, b) => {
+              const at = a.payment_date ? new Date(a.payment_date).getTime() : 0;
+              const bt = b.payment_date ? new Date(b.payment_date).getTime() : 0;
+              return bt - at;
+            })[0];
             if (latestPlanPayment && latestPlanPayment.due_amount > 0) {
               duesExist = true;
             }
@@ -174,12 +178,12 @@ import { useState, useContext } from 'react';
 
       return (
         <SafeAreaView style={styles.container} edges={['top']}>
-          <StatusBar style="dark" />
-          <Header 
-            title="Add Payment"
-            leftIcon={<ArrowLeft size={24} color={COLORS.black} />}
-            onLeftPress={() => router.back()}
-          />
+          <StatusBar style="light" />
+            <Header 
+              title="Add Payment"
+              leftIcon={<ArrowLeft size={24} color={COLORS.white} />}
+              onLeftPress={() => router.back()}
+            />
           
           <ScrollView
             style={styles.content}
@@ -287,7 +291,7 @@ import { useState, useContext } from 'react';
         gap: 24,
       },
       section: {
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderRadius: 12,
         padding: 16,
         zIndex:0,
@@ -295,7 +299,7 @@ import { useState, useContext } from 'react';
       },
       sectionTitle: {
         ...FONTS.h4,
-        color: COLORS.black,
+        color: COLORS.white,
         marginBottom: 16,
       },
       row: {
@@ -307,9 +311,9 @@ import { useState, useContext } from 'react';
       },
       footer: {
         padding: 16,
-        backgroundColor: COLORS.white,
+        backgroundColor: COLORS.surface,
         borderTopWidth: 1,
-        borderTopColor: COLORS.lightGray,
+        borderTopColor: COLORS.surfaceLight,
       },
       infoMessageContainer: {
         backgroundColor: COLORS.infoLight,

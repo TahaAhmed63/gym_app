@@ -185,9 +185,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 8,
     padding: 12,
   },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   selectorText: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginLeft: 12,
   },
   error: {
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '90%',
     maxHeight: '80%',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     ...SIZES.shadow,
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   selectedOptionText: {
     color: COLORS.primary,
@@ -249,8 +249,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     margin: 16,
-    color: COLORS.black,
+    color: COLORS.white,
     ...FONTS.body3,
-    backgroundColor: COLORS.background || COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
   },
 }); 

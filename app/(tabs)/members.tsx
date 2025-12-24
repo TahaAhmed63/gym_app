@@ -46,9 +46,7 @@ const [members, setMembers] = useState<Member[] | null>(null);
   }, [totalPages]);
 
   const loadMembers = useCallback(async (pageToLoad: number = 1, appending: boolean = false) => {
-    console.log(`loadMembers called - pageToLoad: ${pageToLoad}, appending: ${appending}`);
     if (appending && pageToLoad > totalPagesRef.current) {
-      console.log("loadMembers: Reached end of pages or already loading more.");
       return;
     }
 
@@ -60,17 +58,12 @@ const [members, setMembers] = useState<Member[] | null>(null);
 
     try {
       const data: MembersApiResponse = await fetchMembers(pageToLoad);
-      console.log("loadMembers: API Response data:", data);
-   
+
       setMembers(prevMembers => {
-        console.log("setMembers: Previous members state:", prevMembers);
         const newMembers: Member[] = data.data || [];
-        console.log("setMembers: New members from API:", newMembers);
         const combined = appending ? [...(prevMembers || []), ...newMembers] : newMembers;
-        
-        // De-duplicate members based on ID to prevent 'encountered two children with same key'
+        // De-duplicate members based on ID
         const uniqueMembers = Array.from(new Map(combined.map((member: Member) => [member.id, member])).values());
-        console.log("setMembers: Unique combined members:", uniqueMembers);
         return uniqueMembers;
       });
       setTotalPages(data.meta?.totalPages);
@@ -80,7 +73,6 @@ const [members, setMembers] = useState<Member[] | null>(null);
     } finally {
       setIsLoading(false);
       setIsFetchingMore(false);
-      console.log("loadMembers completed. isLoading:", isLoading, "isFetchingMore:", isFetchingMore);
     }
   }, []); // Empty dependency array, relies on refs for currentPage and totalPages
 
@@ -126,7 +118,7 @@ const [members, setMembers] = useState<Member[] | null>(null);
   return (
     isLoading ? (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="dark" />
+    <StatusBar style="light" />
         <Header title="Members" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -134,7 +126,7 @@ const [members, setMembers] = useState<Member[] | null>(null);
       </SafeAreaView>
     ) : (
       <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar style="dark" />
+    <StatusBar style="light" />
         <Header title="Members" />
         <View style={styles.searchContainer}>
           <View style={styles.searchBox}>
@@ -189,9 +181,10 @@ const [members, setMembers] = useState<Member[] | null>(null);
               viewMode={viewMode as 'grid' | 'list'}
             />
           )}
-          numColumns={viewMode === 'grid' ? 2 : 1}
+          numColumns={viewMode === 'grid' ? 3 : 1}
           key={viewMode === 'grid' ? 'grid' : 'list'}
           contentContainerStyle={styles.listContainer}
+          columnWrapperStyle={viewMode === 'grid' ? styles.columnWrapper : undefined}
           showsVerticalScrollIndicator={false}
           onEndReached={() => {
             if (!isLoading && !isFetchingMore && currentPageRef.current < totalPagesRef.current) {
@@ -244,7 +237,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 48,
@@ -254,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...FONTS.body3,
     marginLeft: 8,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   filterButton: {
     width: 48,
@@ -275,7 +268,7 @@ const styles = StyleSheet.create({
   },
   totalMembers: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   headerActions: {
     flexDirection: 'row',
@@ -286,15 +279,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surfaceLight,
     marginLeft: 8,
   },
   activeViewMode: {
     backgroundColor: COLORS.primaryLight,
   },
   listContainer: {
-    padding: 16,
-    paddingBottom: 80,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 100,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   loadingContainer: {
     flex: 1,

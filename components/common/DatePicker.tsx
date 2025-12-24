@@ -42,7 +42,7 @@ export default function DatePicker({ label, value, onChange, error, disabled }: 
         disabled={disabled} // Apply disabled prop to TouchableOpacity
       >
         <View style={styles.dateContainer}>
-          <Calendar size={16} color={COLORS.darkGray} />
+          <Calendar size={16} color={COLORS.lightGray} />
           <Text style={styles.dateText}>
             {value ? formatDate(value) : 'Select date'}
           </Text>
@@ -70,13 +70,13 @@ const styles = StyleSheet.create({
   },
   label: {
     ...FONTS.body4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.surfaceLight,
     borderRadius: 8,
     padding: 12,
   },
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     marginLeft: 8,
   },
   error: {

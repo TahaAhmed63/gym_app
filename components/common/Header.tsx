@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.surfaceLight,
   },
   leftSection: {
     width: 40,
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   iconButton: {
     width: 40,
@@ -73,6 +73,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.surfaceLight,
   },
 });

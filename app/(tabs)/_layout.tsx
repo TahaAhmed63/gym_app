@@ -1,5 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Chrome as Home, Users, CreditCard, Settings, File } from 'lucide-react-native';
+import { COLORS } from '@/constants/theme';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 // Import your screen components
 import DashboardScreen from './index';
@@ -16,9 +17,9 @@ export default function TabLayout() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarStyle: { backgroundColor: '#fff', height: 60 },
-        tabBarActiveTintColor: '#3366FF',
-        tabBarInactiveTintColor: '#888',
+        tabBarStyle: { backgroundColor: COLORS.surface, height: 60, borderTopColor: COLORS.surfaceLight },
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.lightGray,
         headerShown: false,
       }}
     >

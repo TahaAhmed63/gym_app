@@ -42,7 +42,7 @@ export default function SettingsScreen() {
   
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Header title="Settings" />
       
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -75,7 +75,7 @@ export default function SettingsScreen() {
           >
             <User size={20} color={COLORS.primary} />
             <Text style={styles.settingText}>My Profile</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
+            <ChevronRight size={20} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -84,7 +84,7 @@ export default function SettingsScreen() {
           >
             <Shield size={20} color={COLORS.primary} />
             <Text style={styles.settingText}>Security</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
+            <ChevronRight size={20} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <View style={styles.settingItem}>
@@ -93,7 +93,7 @@ export default function SettingsScreen() {
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ false: COLORS.lightGray, true: COLORS.primaryLight }}
+              trackColor={{ false: COLORS.surfaceLight, true: COLORS.primaryLight }}
               thumbColor={notificationsEnabled ? COLORS.primary : COLORS.gray}
             />
           </View>
@@ -104,7 +104,7 @@ export default function SettingsScreen() {
             <Switch
               value={darkModeEnabled}
               onValueChange={setDarkModeEnabled}
-              trackColor={{ false: COLORS.lightGray, true: COLORS.primaryLight }}
+              trackColor={{ false: COLORS.surfaceLight, true: COLORS.primaryLight }}
               thumbColor={darkModeEnabled ? COLORS.primary : COLORS.gray}
             />
           </View>
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
             >
               <CreditCard size={20} color={COLORS.success} />
               <Text style={styles.settingText}>Membership Plans</Text>
-              <ChevronRight size={20} color={COLORS.darkGray} />
+              <ChevronRight size={20} color={COLORS.lightGray} />
             </TouchableOpacity>
           )}
           
@@ -142,7 +142,7 @@ export default function SettingsScreen() {
             >
               <Users size={20} color={COLORS.success} />
               <Text style={styles.settingText}>Staff Management</Text>
-              <ChevronRight size={20} color={COLORS.darkGray} />
+              <ChevronRight size={20} color={COLORS.lightGray} />
             </TouchableOpacity>
           )}
 
@@ -153,7 +153,7 @@ export default function SettingsScreen() {
             >
               <Users size={20} color={COLORS.success} />
               <Text style={styles.settingText}>Batches</Text>
-              <ChevronRight size={20} color={COLORS.darkGray} />
+              <ChevronRight size={20} color={COLORS.lightGray} />
             </TouchableOpacity>
           )}
 
@@ -164,7 +164,7 @@ export default function SettingsScreen() {
             >
               <FileText size={20} color={COLORS.info} />
               <Text style={styles.settingText}>Reports</Text>
-              <ChevronRight size={20} color={COLORS.darkGray} />
+              <ChevronRight size={20} color={COLORS.lightGray} />
             </TouchableOpacity>
           )}
 
@@ -174,7 +174,7 @@ export default function SettingsScreen() {
           >
             <Settings size={20} color={COLORS.success} />
             <Text style={styles.settingText}>Automation</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
+            <ChevronRight size={20} color={COLORS.lightGray} />
           </TouchableOpacity>
         </View>
         
@@ -187,7 +187,7 @@ export default function SettingsScreen() {
           >
             <HelpCircle size={20} color={COLORS.info} />
             <Text style={styles.settingText}>Help & Support</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
+            <ChevronRight size={20} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
           >
             <FileText size={20} color={COLORS.info} />
             <Text style={styles.settingText}>Terms & Conditions</Text>
-            <ChevronRight size={20} color={COLORS.darkGray} />
+            <ChevronRight size={20} color={COLORS.lightGray} />
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     padding: 16,
     marginTop: 16,
     marginHorizontal: 16,
@@ -250,16 +250,16 @@ const styles = StyleSheet.create({
   },
   profileName: {
     ...FONTS.h3,
-    color: COLORS.black,
+    color: COLORS.white,
   },
   profileEmail: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
   editProfileButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: COLORS.surfaceLight,
     borderRadius: 8,
   },
   editProfileText: {
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   settingsSection: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     marginTop: 24,
     marginHorizontal: 16,
     borderRadius: 16,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...FONTS.h4,
-    color: COLORS.black,
+    color: COLORS.white,
     marginBottom: 16,
   },
   settingItem: {
@@ -284,11 +284,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    borderBottomColor: COLORS.surfaceLight,
   },
   settingText: {
     ...FONTS.body3,
-    color: COLORS.black,
+    color: COLORS.white,
     flex: 1,
     marginLeft: 16,
   },
@@ -298,6 +298,6 @@ const styles = StyleSheet.create({
   },
   versionText: {
     ...FONTS.body4,
-    color: COLORS.darkGray,
+    color: COLORS.lightGray,
   },
 });
